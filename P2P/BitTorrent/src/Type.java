@@ -1,0 +1,10 @@
+public enum Type {
+	CHOKE,
+	UNCHOKE,
+	INTERESTED,
+	NOT_INTERESTED,
+	HAVE,
+	BITFIELD,
+	REQUEST,
+	PIECE,
+}
