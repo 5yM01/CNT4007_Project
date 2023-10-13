@@ -1,7 +1,8 @@
 import java.io.Serializable;
 
 public class BitField implements Serializable {
-    public int data = 0;
+    // Class Representing Singular BitField in BitFieldArray
+    public int data = 0; // Data stored as int between 0 and 255
     public int id;
 
     public BitField(){};

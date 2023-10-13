@@ -1,4 +1,5 @@
 public enum Type {
+    // Enum Representing Actual Message Types
 	CHOKE,
 	UNCHOKE,
 	INTERESTED,

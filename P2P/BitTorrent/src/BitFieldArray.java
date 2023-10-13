@@ -1,6 +1,7 @@
 import java.io.Serializable;
 
 public class BitFieldArray implements Serializable {
+    // Class Representing Peer Bitfield Array
     public BitField[] fields;
 
     public BitFieldArray(){};
@@ -18,10 +19,9 @@ public class BitFieldArray implements Serializable {
         }
     }
 
-    public void setAllFieldsUp() {
+    public void setAllFieldsToOne() {
         for (BitField  b : this.fields) {
             b.setData(255);
         }
     }
-
 }

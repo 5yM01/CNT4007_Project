@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Client_Utils {
+    // Class for any useful functions
     public static ArrayList<String> read_file(String path) {
         ArrayList<String> stringArr = new ArrayList<String>();
 

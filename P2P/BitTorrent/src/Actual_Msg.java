@@ -1,6 +1,7 @@
 import java.io.Serializable;
 
 public class Actual_Msg implements Message, Serializable {
+    // Class Representing Actual Message
     private int length;
     private Type msgType;
     // TODO: Turn BitfieldArray here into just object?

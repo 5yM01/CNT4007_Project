@@ -3,6 +3,7 @@ import java.net.ServerSocket;
 import java.util.ArrayList;
 
 public class PeerClient {
+    // Class Representing Main Program
     static Peer myPeer;
     static int NumberOfPreferredNeighbors;
     static int UnchokingInterval;
@@ -80,6 +81,7 @@ public class PeerClient {
     }
 
     public static void tcp_connect() throws IOException {
+        // Loop that connects current Peer to all neighbor peers
         for (int i = clientNum, j = 0; i > 0; i--) {
             Peer currPeer = peerList.get(j++);
             PeerExchangeHandler handler = new PeerExchangeHandler(currPeer, myPeer);
@@ -88,6 +90,7 @@ public class PeerClient {
             handler.start();
         }
 
+        // Opens socket for current peer to accept incoming connections
         // TODO: Last on list isn't listening?
         ServerSocket listener = new ServerSocket(myPeer.peerPort);
         try {

@@ -8,6 +8,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class PeerExchangeHandler extends Thread {
+    // Class Representing P2P Exhange Between Peers
 	private Socket connection;
 	private ObjectInputStream in;
 	private ObjectOutputStream out;
@@ -24,11 +25,13 @@ public class PeerExchangeHandler extends Thread {
 
 
 	public PeerExchangeHandler(Socket connection, Peer _myPeer) throws IOException {
+		// Constructor for Listener
 		this.connection = connection;
 		construct(_myPeer, true);
 	}
 	
 	public PeerExchangeHandler(Peer _peer, Peer _myPeer) throws IOException {
+		// Constructor for Peer Initiating Connection
 		this.connection = new Socket(_peer.peerAddress, _peer.peerPort);
 		this.peer = _peer;
 		construct(_myPeer, false);
@@ -78,6 +81,7 @@ public class PeerExchangeHandler extends Thread {
 		sendMessage(new Actual_Msg(Type.BITFIELD, myPeer.bitfield));
 		setPeerBitfield((Actual_Msg) recvMessage());
 
+		// Determines if interested in neighbor or not
 		setPiecesToGet(myPeer.bitfieldArrayDiff(this.peerBitfield.getPayload().fields));
 		if (getPiecesToGet().size() != 0) {
 			sendMessage(new Actual_Msg(Type.INTERESTED));
@@ -89,7 +93,6 @@ public class PeerExchangeHandler extends Thread {
     }
 
     public void preferred_neighbors() {
-        // TODO: Use ExecutorService
         // Calculate downloading rate
         download_rates();
         
