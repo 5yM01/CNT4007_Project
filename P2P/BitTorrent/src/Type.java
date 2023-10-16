@@ -7,5 +7,5 @@ public enum Type {
 	HAVE,
 	BITFIELD,
 	REQUEST,
-	PIECE,
+	PIECE
 }

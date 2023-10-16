@@ -3,7 +3,7 @@ import java.io.Serializable;
 public class Handshake_Msg implements Message, Serializable {
     // Class Representing Handshake Message
     private String header = "P2PFILESHARINGPROJ";
-    private int zeroBits;
+    private byte[] zeroBits = new byte[10];
     private int peerID;
 
     public Handshake_Msg() {}
@@ -16,7 +16,11 @@ public class Handshake_Msg implements Message, Serializable {
         System.out.println("Header: " + header + "\nID: " + peerID);
     }
 
-    public Boolean check(int id) {
-        return this.peerID == id;
+    public Boolean checkHeader() {
+        return this.header.equals("P2PFILESHARINGPROJ");
+    }
+
+    public Boolean checkHS(int id) {
+        return this.peerID == id || this.checkHeader();
     }
 }

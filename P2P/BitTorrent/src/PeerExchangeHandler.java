@@ -44,6 +44,8 @@ public class PeerExchangeHandler extends Thread {
 		in = new ObjectInputStream(this.connection.getInputStream());
 	}
 
+	// Main P2P Functions
+
 	public void run() {
 		// Initial Contact
 		try {
@@ -63,33 +65,45 @@ public class PeerExchangeHandler extends Thread {
 	public void init_contact() throws ClassNotFoundException, IOException {
         System.out.println("Handshake and Bitfield");
 
-		// Sends Handshake to Peer
+		// Handshake Exchange between Peer A and Peer B
 		sendMessage(new Handshake_Msg(myPeer.peerID));
 		Handshake_Msg response = (Handshake_Msg) recvMessage();
 
-		response.print();
-
-		// Checks if correct Peer has established connection
-		if (!getListener() && !response.check(peer.peerID)) {
-			System.out.println("PeerID is not the same!");
+		// Peer A Checks if its Peer B that has established connection
+		if (!isListener() && !response.checkHS(peer.peerID)) {
+			System.out.println("PeerID is not the same or incorrect header!");
 		}
 
-		// TODO: Sends Bitfield to Peer If Has Piece
-		// if (myPeer.hasAnyPiece()) {
-		// 	sendMessage(new Actual_Msg(Type.BITFIELD, myPeer.bitfield));
-		// }
-		sendMessage(new Actual_Msg(Type.BITFIELD, myPeer.bitfield));
-		setPeerBitfield((Actual_Msg) recvMessage());
+		// Peer A Sends Bitfield to Peer B
+		// Peer B Sends If It Has Piece
+		if (!isListener() || myPeer.hasAnyPiece()) {
+			sendMessage(new Actual_Msg(Type.BITFIELD, myPeer.bitfield));
+		}
 
-		// Determines if interested in neighbor or not
-		setPiecesToGet(myPeer.bitfieldArrayDiff(this.peerBitfield.getPayload().fields));
-		if (getPiecesToGet().size() != 0) {
-			sendMessage(new Actual_Msg(Type.INTERESTED));
+		// Peer B Receives Bitfield & Sends Interest Message
+		if (isListener()) {
+			setPeerBitfield((Actual_Msg) recvMessage());
+			setPiecesToGet(myPeer.bitfieldArrayDiff(this.peerBitfield.getPayload().fields));
+			sendInterestedMessage();
+		}
+
+		// TODO: Peer A does not receive Bitfield. Send not interested from Peer A to Peer B?
+
+		// Peer B Has Piece & Sends Bitfield to Peer A
+		Actual_Msg msg = (Actual_Msg) recvMessage();
+		if (!isListener() && msg.getMsgType() == Type.BITFIELD) {
+			setPeerBitfield(msg);
+			setPiecesToGet(myPeer.bitfieldArrayDiff(this.peerBitfield.getPayload().fields));
+			sendInterestedMessage();
+			msg = (Actual_Msg) recvMessage();
+		}
+
+		// Interest Exchange Between Peers
+		if (msg.getMsgType() == Type.INTERESTED || msg.getMsgType() == Type.NOT_INTERESTED) {
+			setInterested(msg);
 		} else {
-			sendMessage(new Actual_Msg(Type.NOT_INTERESTED));
+			System.out.println("Message Type not allowed yet!");
 		}
-
-		setInterested((Actual_Msg) recvMessage());
     }
 
     public void preferred_neighbors() {
@@ -101,6 +115,16 @@ public class PeerExchangeHandler extends Thread {
     public void download_rates() {
         System.out.println("Calculate Download Rates and Choose top k");
     }
+
+	// Helper Functions
+
+	public void sendInterestedMessage() {
+		if (getPiecesToGet().size() != 0) {
+			sendMessage(new Actual_Msg(Type.INTERESTED));
+		} else {
+			sendMessage(new Actual_Msg(Type.NOT_INTERESTED));
+		}
+	}
 	
 	// Variable GET & SET
 
@@ -131,7 +155,7 @@ public class PeerExchangeHandler extends Thread {
 		this.piecesToGet = piecesToGet;
 	}
 	
-	public Boolean getListener() {
+	public Boolean isListener() {
 		return listener;
 	}
 
