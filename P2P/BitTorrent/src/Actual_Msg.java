@@ -28,4 +28,13 @@ public class Actual_Msg implements Message, Serializable {
     public Type getMsgType() {
         return this.msgType;
     }
+
+    public void setLength() {
+        this.length = payloadLength() + 1;
+    }
+
+    public int payloadLength() {
+        // TODO: Get length of payload
+        return getPayload().length;
+    }
 }
