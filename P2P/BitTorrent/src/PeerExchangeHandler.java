@@ -87,8 +87,6 @@ public class PeerExchangeHandler extends Thread {
 			sendInterestedMessage();
 		}
 
-		// TODO: Peer A does not receive Bitfield. Send not interested from Peer A to Peer B?
-
 		// Peer B Has Piece & Sends Bitfield to Peer A
 		Actual_Msg msg = (Actual_Msg) recvMessage();
 		if (!isListener() && msg.getMsgType() == Type.BITFIELD) {
@@ -96,6 +94,9 @@ public class PeerExchangeHandler extends Thread {
 			setPiecesToGet(myPeer.bitfieldArrayDiff(this.peerBitfield.getPayload().fields));
 			sendInterestedMessage();
 			msg = (Actual_Msg) recvMessage();
+		} else if (!isListener()) {
+			// TODO: Send not interested from Peer A to Peer B if Peer B does not have any pieces
+			sendMessage(new Actual_Msg(Type.NOT_INTERESTED));
 		}
 
 		// Interest Exchange Between Peers
