@@ -21,4 +21,22 @@ public class Client_Utils {
 
         return stringArr;
     }
+
+    // Loops until all peers have file
+    public static void waitUntilAllPeersHaveFile(ArrayList<Peer> peers) {
+        while (!allPeersHaveFile(peers)) {
+            assert true;
+        }
+    }
+
+    // Checks if all peers have the file
+    public static Boolean allPeersHaveFile(ArrayList<Peer> peers) {
+        for (Peer p : peers) {
+            if (!p.peerHasFile) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }

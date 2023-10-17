@@ -17,7 +17,7 @@ public class PeerClient {
     static int clientNum = 0;
     static ArrayList<PeerExchangeHandler> peerSockets = new ArrayList<PeerExchangeHandler>();
 
-    // peers
+    // Peers
     static ArrayList<Peer> peerList = new ArrayList<Peer>();
 
     public static void main(String[] args) throws Exception {
@@ -91,20 +91,22 @@ public class PeerClient {
         }
 
         // Opens socket for current peer to accept incoming connections
-        // TODO: Last on list isn't listening?
-        ServerSocket listener = new ServerSocket(myPeer.peerPort);
-        try {
-			while(true) {
-				PeerExchangeHandler listeningHandler = new PeerExchangeHandler(listener.accept(), myPeer);
+        // Last Peer Does Not Listen
+        if (myPeer.peerID != peerList.get(peerList.size() - 1).peerID) {
+            ServerSocket listener = new ServerSocket(myPeer.peerPort);
+            try {
+                PeerExchangeHandler listeningHandler = new PeerExchangeHandler(listener.accept(), myPeer);
                 listeningHandler.setNeighborTiming(NumberOfPreferredNeighbors, UnchokingInterval, OptimisticUnchokingInterval);
                 listeningHandler.start();
-			}
-		} finally {
-				listener.close();
-		}
+            } finally {
+                listener.close();
+            }
+        }
+
     }
 
     public static void close_connections() throws IOException {
+        Client_Utils.waitUntilAllPeersHaveFile(peerList);
         for (PeerExchangeHandler s : peerSockets) {
             s.close_connection();
         }
