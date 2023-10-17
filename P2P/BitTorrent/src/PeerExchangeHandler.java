@@ -69,6 +69,12 @@ public class PeerExchangeHandler extends Thread {
 		sendMessage(new Handshake_Msg(myPeer.peerID));
 		Handshake_Msg response = (Handshake_Msg) recvMessage();
 
+		if (isListener()) {
+            String msg = "Peer " + myPeer.peerID + " is connected from Peer " + response.getPeerID();
+			myPeer.writeToLog(msg);
+		}
+
+
 		// Peer A Checks if its Peer B that has established connection
 		if (!isListener() && !response.checkHS(peer.peerID)) {
 			System.out.println("PeerID is not the same or incorrect header!");

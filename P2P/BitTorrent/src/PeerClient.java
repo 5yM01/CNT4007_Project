@@ -3,6 +3,8 @@ import java.net.ServerSocket;
 import java.util.ArrayList;
 
 public class PeerClient {
+    // TODO: Rename to peerProcess
+
     // Class Representing Main Program
     static Peer myPeer;
     static int NumberOfPreferredNeighbors;
@@ -68,7 +70,7 @@ public class PeerClient {
         }
     }
     
-    public static void params(String[] args) {
+    public static void params(String[] args) throws IOException {
         int myPeerID = Integer.parseInt(args[0]);
 
         for (Peer p : peerList) {
@@ -78,6 +80,8 @@ public class PeerClient {
             }
             clientNum++;
         }
+
+        Client_Utils.createLogFile(myPeerID);
     }
 
     public static void tcp_connect() throws IOException {
@@ -88,6 +92,10 @@ public class PeerClient {
             handler.setNeighborTiming(NumberOfPreferredNeighbors, UnchokingInterval, OptimisticUnchokingInterval);
             peerSockets.add(handler);
             handler.start();
+
+            // TODO: Log Class?
+            String log_message = "Peer " + myPeer.peerID + " makes a connection to Peer " + currPeer.peerID;
+            myPeer.writeToLog(log_message);
         }
 
         // Opens socket for current peer to accept incoming connections

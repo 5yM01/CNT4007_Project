@@ -1,3 +1,5 @@
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 
 public class Peer {
@@ -7,12 +9,14 @@ public class Peer {
 	public int peerPort;
 	public Boolean peerHasFile;
 	public BitFieldArray bitfield;
+	public String logPath;
 
 	public Peer(String pId, String pAddress, String pPort, String hasFile, int bitFieldLength) {
 		this.peerID = Integer.parseInt(pId);
 		this.peerAddress = pAddress;
 		this.peerPort = Integer.parseInt(pPort);
         this.peerHasFile = (Integer.parseInt(hasFile) == 1);
+		this.logPath = "log_peer_" + pId + ".log";
 		initBitField(bitFieldLength);
 	}
 
@@ -44,4 +48,17 @@ public class Peer {
 
 		return hasPieces;
 	}
+	
+    public void writeToLog(String log) {
+        // TODO: Add Semaphore?
+        try {
+            FileWriter writer = new FileWriter(this.logPath);
+            String message = "[" + Client_Utils.getDateTime() + "]: " + log;
+            writer.write(message);
+            writer.close();
+        } catch (IOException e) {
+            System.out.println("An error occurred.");
+            e.printStackTrace();
+        }
+    }
 }

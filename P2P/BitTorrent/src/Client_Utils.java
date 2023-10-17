@@ -1,5 +1,8 @@
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Scanner;
 
@@ -39,4 +42,20 @@ public class Client_Utils {
 
         return true;
     }
+
+    public static void createLogFile(int peerID) throws IOException {
+        String path = "log_peer_" + peerID + ".log";
+        File log_file = new File(path);
+        // TODO: Check or always create new log?
+        if (!log_file.exists()) {
+            log_file.createNewFile();
+        }
+    }
+
+    public static String getDateTime() {
+        LocalDateTime curr_time = LocalDateTime.now();
+        DateTimeFormatter format = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
+        return curr_time.format(format);
+    }
+
 }
