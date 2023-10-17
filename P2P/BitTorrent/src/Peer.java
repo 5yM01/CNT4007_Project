@@ -52,8 +52,8 @@ public class Peer {
     public void writeToLog(String log) {
         // TODO: Add Semaphore?
         try {
-            FileWriter writer = new FileWriter(this.logPath);
-            String message = "[" + Client_Utils.getDateTime() + "]: " + log;
+            FileWriter writer = new FileWriter(this.logPath, true);
+            String message = "[" + Client_Utils.getDateTime() + "]: " + log + "\n";
             writer.write(message);
             writer.close();
         } catch (IOException e) {
