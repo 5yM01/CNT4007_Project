@@ -53,6 +53,7 @@ public class Peer {
         // TODO: Add Semaphore?
         try {
             FileWriter writer = new FileWriter(this.logPath, true);
+			// TODO: Maybe move time to PeerLog File?
             String message = "[" + Client_Utils.getDateTime() + "]: " + log + "\n";
             writer.write(message);
             writer.close();
@@ -61,4 +62,13 @@ public class Peer {
             e.printStackTrace();
         }
     }
+
+	public Peer[] getPreferredNeighbors() {
+		// TODO: Implement
+		return null;
+	}
+	
+	public int currNumOfPieces() {
+		return this.bitfield.currBitFieldSize();
+	}
 }

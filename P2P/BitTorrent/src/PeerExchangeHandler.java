@@ -70,10 +70,9 @@ public class PeerExchangeHandler extends Thread {
 		Handshake_Msg response = (Handshake_Msg) recvMessage();
 
 		if (isListener()) {
-            String msg = "Peer " + myPeer.peerID + " is connected from Peer " + response.getPeerID();
-			myPeer.writeToLog(msg);
+			String log_msg = PeerLog.log_connected_from(myPeer.peerID, response.getPeerID());
+			myPeer.writeToLog(log_msg);
 		}
-
 
 		// Peer A Checks if its Peer B that has established connection
 		if (!isListener() && !response.checkHS(peer.peerID)) {
@@ -107,7 +106,7 @@ public class PeerExchangeHandler extends Thread {
 
 		// Interest Exchange Between Peers
 		if (msg.getMsgType() == Type.INTERESTED || msg.getMsgType() == Type.NOT_INTERESTED) {
-			setInterested(msg);
+			setInterested(msg, response.getPeerID());
 		} else {
 			System.out.println("Message Type not allowed yet!");
 		}
@@ -142,7 +141,17 @@ public class PeerExchangeHandler extends Thread {
 		init_streams();
 	}
 
-	public void setInterested(Actual_Msg msg) {
+	public void setInterested(Actual_Msg msg, int peerID) {
+		String log_msg;
+		
+		if (msg.getMsgType() == Type.INTERESTED) {
+			log_msg = PeerLog.log_is_interested(myPeer.peerID, peerID);
+		} else {
+			log_msg = PeerLog.log_not_interested(myPeer.peerID, peerID);
+		}
+		
+		myPeer.writeToLog(log_msg);
+
 		this.peerInterested = (msg.getMsgType() == Type.INTERESTED);
 	}
 

@@ -35,6 +35,6 @@ public class Actual_Msg implements Message, Serializable {
 
     public int payloadLength() {
         // TODO: Get length of payload
-        return getPayload().length;
+        return getPayload().totalLength;
     }
 }

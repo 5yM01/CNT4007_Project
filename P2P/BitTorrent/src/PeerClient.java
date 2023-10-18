@@ -93,8 +93,7 @@ public class PeerClient {
             peerSockets.add(handler);
             handler.start();
 
-            // TODO: Log Class?
-            String log_message = "Peer " + myPeer.peerID + " makes a connection to Peer " + currPeer.peerID;
+            String log_message = PeerLog.log_connected_to(myPeer.peerID, currPeer.peerID);
             myPeer.writeToLog(log_message);
         }
 
@@ -103,9 +102,12 @@ public class PeerClient {
         if (myPeer.peerID != peerList.get(peerList.size() - 1).peerID) {
             ServerSocket listener = new ServerSocket(myPeer.peerPort);
             try {
-                PeerExchangeHandler listeningHandler = new PeerExchangeHandler(listener.accept(), myPeer);
-                listeningHandler.setNeighborTiming(NumberOfPreferredNeighbors, UnchokingInterval, OptimisticUnchokingInterval);
-                listeningHandler.start();
+                // TODO: Stop when no more peers will be connecting
+                while (true) {
+                    PeerExchangeHandler listeningHandler = new PeerExchangeHandler(listener.accept(), myPeer);
+                    listeningHandler.setNeighborTiming(NumberOfPreferredNeighbors, UnchokingInterval, OptimisticUnchokingInterval);
+                    listeningHandler.start();
+                }
             } finally {
                 listener.close();
             }
