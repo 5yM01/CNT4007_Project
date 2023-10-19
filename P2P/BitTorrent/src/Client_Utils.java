@@ -8,6 +8,7 @@ import java.util.Scanner;
 
 public class Client_Utils {
     // Class for any useful functions
+
     public static ArrayList<String> read_file(String path) {
         ArrayList<String> stringArr = new ArrayList<String>();
 
@@ -18,7 +19,7 @@ public class Client_Utils {
             }
             reader.close();
         } catch (FileNotFoundException e) {
-            System.out.println("An error occurred.");
+            System.out.println("Error Occured While Trying To Read File " + path);
             e.printStackTrace();
         }
 
@@ -28,7 +29,13 @@ public class Client_Utils {
     // Loops until all peers have file
     public static void waitUntilAllPeersHaveFile(ArrayList<Peer> peers) {
         while (!allPeersHaveFile(peers)) {
-            assert true;
+            // TODO: Leave check every second?
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            // assert true;
         }
     }
 

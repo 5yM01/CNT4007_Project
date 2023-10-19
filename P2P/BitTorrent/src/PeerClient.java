@@ -6,18 +6,24 @@ public class PeerClient {
     // TODO: Rename to peerProcess
 
     // Class Representing Main Program
+
+    // Peer Running Process
     static Peer myPeer;
+
+    // Common.cfg Variables
     static int NumberOfPreferredNeighbors;
     static int UnchokingInterval;
     static int OptimisticUnchokingInterval;
     static String FileName;
     static int FileSize;
     static int PieceSize;
+
+    // Number of BitFields Based on File & Piece Sizes
     static int BitFieldLength;
 
     // TCP Connection Info
     static int clientNum = 0;
-    static ArrayList<PeerExchangeHandler> peerSockets = new ArrayList<PeerExchangeHandler>();
+    static ArrayList<PeerExchangeHandler> peerConnections = new ArrayList<PeerExchangeHandler>();
 
     // Peers
     static ArrayList<Peer> peerList = new ArrayList<Peer>();
@@ -31,6 +37,8 @@ public class PeerClient {
 
         // Establish TCP Connection
         tcp_connect();
+
+        // TODO: Move Exchange Functions Here?
 
         // Close Connections
         close_connections();
@@ -85,25 +93,26 @@ public class PeerClient {
     }
 
     public static void tcp_connect() throws IOException {
-        // Loop that connects current Peer to all neighbor peers
-        for (int i = clientNum, j = 0; i > 0; i--) {
-            Peer currPeer = peerList.get(j++);
-            PeerExchangeHandler handler = new PeerExchangeHandler(currPeer, myPeer);
-            handler.setNeighborTiming(NumberOfPreferredNeighbors, UnchokingInterval, OptimisticUnchokingInterval);
-            peerSockets.add(handler);
-            handler.start();
+        // Loop that Connects Current Peer to all Currently Running Neighbor Peers
+        for (int i = clientNum, j = 0; i > 0; i--, j++) {
+            Peer currPeer = peerList.get(j);
+            PeerExchangeHandler thread = new PeerExchangeHandler(currPeer, myPeer);
+            thread.setNeighborTiming(NumberOfPreferredNeighbors, UnchokingInterval, OptimisticUnchokingInterval);
+            peerConnections.add(thread);
+            thread.start();
 
             String log_message = PeerLog.log_connected_to(myPeer.peerID, currPeer.peerID);
             myPeer.writeToLog(log_message);
         }
 
-        // Opens socket for current peer to accept incoming connections
+        // Opens Socket for Current Peer to Accept Incoming Connections
         // Last Peer Does Not Listen
-        if (myPeer.peerID != peerList.get(peerList.size() - 1).peerID) {
+        // TODO: Check if necessary
+        if (clientNum != peerList.size() - 1) {
             ServerSocket listener = new ServerSocket(myPeer.peerPort);
             try {
-                // TODO: Stop when no more peers will be connecting
-                while (true) {
+                // Listens To Connections With Remaining Peers On List
+                for (int i = clientNum + 1; i < peerList.size(); i++) {
                     PeerExchangeHandler listeningHandler = new PeerExchangeHandler(listener.accept(), myPeer);
                     listeningHandler.setNeighborTiming(NumberOfPreferredNeighbors, UnchokingInterval, OptimisticUnchokingInterval);
                     listeningHandler.start();
@@ -112,12 +121,11 @@ public class PeerClient {
                 listener.close();
             }
         }
-
     }
 
     public static void close_connections() throws IOException {
         Client_Utils.waitUntilAllPeersHaveFile(peerList);
-        for (PeerExchangeHandler s : peerSockets) {
+        for (PeerExchangeHandler s : peerConnections) {
             s.close_connection();
         }
     }

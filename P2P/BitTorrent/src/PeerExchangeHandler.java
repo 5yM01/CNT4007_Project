@@ -9,20 +9,31 @@ import java.util.concurrent.TimeUnit;
 
 public class PeerExchangeHandler extends Thread {
     // Class Representing P2P Exhange Between Peers
+
+	// TCP Connection Variables
 	private Socket connection;
 	private ObjectInputStream in;
 	private ObjectOutputStream out;
-	private Boolean listener;
-	private Peer peer = null;
+
+	// Current Peer Information
 	private Peer myPeer;
+	private Boolean listener;
+	
+	// Neighbor Peer Information
+	private Peer peer = null;
 	private Actual_Msg peerBitfield;
 	private Boolean peerInterested;
 	private ArrayList<Integer> piecesToGet;
-	ScheduledExecutorService taskScheduler;
+
+	// Common.cfg Variables
 	private int NumberOfPreferredNeighbors;
     private int UnchokingInterval;
     private int OptimisticUnchokingInterval;
+	
+	// Piece Exchange Variables
+	ScheduledExecutorService taskScheduler;
 
+	// Constructors & Initialization
 
 	public PeerExchangeHandler(Socket connection, Peer _myPeer) throws IOException {
 		// Constructor for Listener
@@ -36,7 +47,13 @@ public class PeerExchangeHandler extends Thread {
 		this.peer = _peer;
 		construct(_myPeer, false);
 	}
-	
+
+	public void construct(Peer _myPeer, Boolean isListener) throws IOException {
+		this.myPeer = _myPeer;
+		setListener(isListener);
+		init_streams();
+	}
+
 	public void init_streams() throws IOException {
 		//Initialize Input and Output Streams
 		out = new ObjectOutputStream(this.connection.getOutputStream());
@@ -44,7 +61,7 @@ public class PeerExchangeHandler extends Thread {
 		in = new ObjectInputStream(this.connection.getInputStream());
 	}
 
-	// Main P2P Functions
+	// Main P2P Function
 
 	public void run() {
 		// Initial Contact
@@ -62,9 +79,19 @@ public class PeerExchangeHandler extends Thread {
 		taskScheduler.scheduleAtFixedRate(task, 0, UnchokingInterval, TimeUnit.SECONDS);
 	}
 
+	// P2P Initial Handshake & Bitfield Exchange
+
 	public void init_contact() throws ClassNotFoundException, IOException {
         System.out.println("Handshake and Bitfield");
 
+		// Handshake
+		Handshake_Msg response = handshake_exg();
+
+		// Bitfield
+		bitfield_exg(response);
+    }
+
+	public Handshake_Msg handshake_exg() {
 		// Handshake Exchange between Peer A and Peer B
 		sendMessage(new Handshake_Msg(myPeer.peerID));
 		Handshake_Msg response = (Handshake_Msg) recvMessage();
@@ -79,6 +106,10 @@ public class PeerExchangeHandler extends Thread {
 			System.out.println("PeerID is not the same or incorrect header!");
 		}
 
+		return response;
+	}
+
+	public void bitfield_exg(Handshake_Msg response) {
 		// Peer A Sends Bitfield to Peer B
 		// Peer B Sends If It Has Piece
 		if (!isListener() || myPeer.hasAnyPiece()) {
@@ -110,7 +141,9 @@ public class PeerExchangeHandler extends Thread {
 		} else {
 			System.out.println("Message Type not allowed yet!");
 		}
-    }
+	}
+
+	// P2P Piece Exchange & Neighbor Selection
 
     public void preferred_neighbors() {
         // Calculate downloading rate
@@ -134,25 +167,18 @@ public class PeerExchangeHandler extends Thread {
 	
 	// Variable GET & SET
 
-	public void construct(Peer _myPeer, Boolean isListener) throws IOException {
-		this.taskScheduler = Executors.newScheduledThreadPool(NumberOfPreferredNeighbors);
-		this.myPeer = _myPeer;
-		setListener(isListener);
-		init_streams();
-	}
-
 	public void setInterested(Actual_Msg msg, int peerID) {
 		String log_msg;
 		
-		if (msg.getMsgType() == Type.INTERESTED) {
+		this.peerInterested = (msg.getMsgType() == Type.INTERESTED);
+
+		if (this.peerInterested) {
 			log_msg = PeerLog.log_is_interested(myPeer.peerID, peerID);
 		} else {
 			log_msg = PeerLog.log_not_interested(myPeer.peerID, peerID);
 		}
 		
 		myPeer.writeToLog(log_msg);
-
-		this.peerInterested = (msg.getMsgType() == Type.INTERESTED);
 	}
 
 	public Actual_Msg getPeerBitfield() {
@@ -183,6 +209,7 @@ public class PeerExchangeHandler extends Thread {
         this.NumberOfPreferredNeighbors = pref;
         this.UnchokingInterval = unchoking;
         this.OptimisticUnchokingInterval = optimistic;
+		this.taskScheduler = Executors.newScheduledThreadPool(pref);
     }
 
 	// TCP Connection
