@@ -1,6 +1,8 @@
 import java.io.Serializable;
 
 public class BitFieldArray implements Serializable {
+    private static final long serialVersionUID = 1004L;
+
     // Class Representing Peer Bitfield Array
     public BitField[] fields;
     public int totalLength;

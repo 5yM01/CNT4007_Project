@@ -1,6 +1,8 @@
 import java.io.Serializable;
 
 public class Handshake_Msg implements Message, Serializable {
+    private static final long serialVersionUID = 1001L;
+
     // Class Representing Handshake Message
     private String header = "P2PFILESHARINGPROJ";
     private byte[] zeroBits = new byte[10];

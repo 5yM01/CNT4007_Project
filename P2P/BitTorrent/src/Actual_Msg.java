@@ -2,22 +2,31 @@ import java.io.Serializable;
 
 public class Actual_Msg implements Message, Serializable {
     // Class Representing Actual Message
+    private static final long serialVersionUID = 1002L;
+
     private int length;
     private Type msgType;
-    // TODO: Turn BitfieldArray here into just object?
-    private BitFieldArray payload;
+
+    // Payload Information
+    private Payload payload;
 
     public Actual_Msg(Type _type) {
         this.msgType = _type;
         this.payload = null;
+        this.length = 4;
     }
 
-    public Actual_Msg(Type _type, BitFieldArray data) {
-        this.msgType = _type;
+    public Actual_Msg(Type _msgType, Payload data) {
+        this.msgType = _msgType;
         this.payload = data;
+        this.length = 4 + data.payloadLength();
     }
 
-    public BitFieldArray getPayload() {
+    public Payload.PayloadTypes getPayloadType() {
+        return this.payload.getType();
+    }
+
+    public Payload getPayload() {
         return this.payload;
     }
 
@@ -30,11 +39,10 @@ public class Actual_Msg implements Message, Serializable {
     }
 
     public void setLength() {
-        this.length = payloadLength() + 1;
+        this.length = this.payload.payloadLength();
     }
 
-    public int payloadLength() {
-        // TODO: Get length of payload
-        return getPayload().totalLength;
+    public int getPayloadLength() {
+        return this.length;
     }
 }

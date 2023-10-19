@@ -2,6 +2,8 @@ import java.io.Serializable;
 
 public class BitField implements Serializable {
     // Class Representing Singular BitField in BitFieldArray
+    private static final long serialVersionUID = 1005L;
+
     public int data = 0; // Data stored as int between 0 and 255
     public int id;
 

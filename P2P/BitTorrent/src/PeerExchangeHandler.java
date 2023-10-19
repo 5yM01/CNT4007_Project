@@ -21,7 +21,7 @@ public class PeerExchangeHandler extends Thread {
 	
 	// Neighbor Peer Information
 	private Peer peer = null;
-	private Actual_Msg peerBitfield;
+	private BitFieldArray peerBitfield;
 	private Boolean peerInterested;
 	private ArrayList<Integer> piecesToGet;
 
@@ -113,13 +113,14 @@ public class PeerExchangeHandler extends Thread {
 		// Peer A Sends Bitfield to Peer B
 		// Peer B Sends If It Has Piece
 		if (!isListener() || myPeer.hasAnyPiece()) {
-			sendMessage(new Actual_Msg(Type.BITFIELD, myPeer.bitfield));
+			Payload load = new Payload(Payload.PayloadTypes.BitFieldArray_Type, myPeer.bitfield);
+			sendMessage(new Actual_Msg(Type.BITFIELD, load));
 		}
 
 		// Peer B Receives Bitfield & Sends Interest Message
 		if (isListener()) {
 			setPeerBitfield((Actual_Msg) recvMessage());
-			setPiecesToGet(myPeer.bitfieldArrayDiff(this.peerBitfield.getPayload().fields));
+			setPiecesToGet(myPeer.bitfieldArrayDiff(this.peerBitfield.fields));
 			sendInterestedMessage();
 		}
 
@@ -127,7 +128,7 @@ public class PeerExchangeHandler extends Thread {
 		Actual_Msg msg = (Actual_Msg) recvMessage();
 		if (!isListener() && msg.getMsgType() == Type.BITFIELD) {
 			setPeerBitfield(msg);
-			setPiecesToGet(myPeer.bitfieldArrayDiff(this.peerBitfield.getPayload().fields));
+			setPiecesToGet(myPeer.bitfieldArrayDiff(this.peerBitfield.fields));
 			sendInterestedMessage();
 			msg = (Actual_Msg) recvMessage();
 		} else if (!isListener()) {
@@ -181,12 +182,12 @@ public class PeerExchangeHandler extends Thread {
 		myPeer.writeToLog(log_msg);
 	}
 
-	public Actual_Msg getPeerBitfield() {
+	public BitFieldArray getPeerBitfield() {
 		return peerBitfield;
 	}
 
 	public void setPeerBitfield(Actual_Msg peerBitfield) {
-		this.peerBitfield = peerBitfield;
+		this.peerBitfield = peerBitfield.getPayload().getPayloadBFA();
 	}
 
 	public ArrayList<Integer> getPiecesToGet() {
