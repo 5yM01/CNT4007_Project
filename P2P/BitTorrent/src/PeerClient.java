@@ -1,5 +1,8 @@
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.time.Instant;
 import java.util.ArrayList;
 
 public class PeerClient {
@@ -121,6 +124,25 @@ public class PeerClient {
                 listener.close();
             }
         }
+    }
+
+    public static void send_file() throws IOException {
+        //string for subdirectory path that contains file (‘~/project/peer_1002/file_name.dat)
+        String subFolderFilePath = "project/peer_" + Integer.toString(myPeer.peerID) + "/" + FileName;
+
+        //read file into buffer of bytes
+        FileInputStream fileIn = new FileInputStream(subFolderFilePath);
+
+        //allocate byte array size of file
+        byte[] data = new byte[FileSize];
+
+        //use buffer input object on file object
+        BufferedInputStream bufIn = new BufferedInputStream(fileIn);
+
+        //TODO: Split into pieces and send?
+
+        //read into byte array? pieces?
+        //bufIn.read(data);
     }
 
     public static void close_connections() throws IOException {
