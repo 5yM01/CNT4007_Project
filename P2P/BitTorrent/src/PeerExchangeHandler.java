@@ -9,6 +9,8 @@ import java.util.concurrent.TimeUnit;
 
 public class PeerExchangeHandler extends Thread {
     // Class Representing P2P Exhange Between Peers
+	// Peer A: "Client" Peer that initiates connection (Peer running program)
+	// Peer B: "Server" Peer that has open connection
 
 	// TCP Connection Variables
 	private Socket connection;
