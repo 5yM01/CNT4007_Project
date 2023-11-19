@@ -1,6 +1,6 @@
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Peer {
     // Class Representing Peer
@@ -11,6 +11,7 @@ public class Peer {
 	public BitFieldArray bitfield;
 	public String logPath;
 
+	// Peer Constructor
 	public Peer(String pId, String pAddress, String pPort, String hasFile, int bitFieldLength) {
 		this.peerID = Integer.parseInt(pId);
 		this.peerAddress = pAddress;
@@ -20,55 +21,45 @@ public class Peer {
 		initBitField(bitFieldLength);
 	}
 
+	// Creates Bitfield for Peer
 	public void initBitField(int length) {
-		this.bitfield = new BitFieldArray(length, peerHasFile);
+		this.bitfield = new BitFieldArray(length);
 	}
 
-    public Boolean hasAnyPiece() {
-		// Checks if Peer has at least one piece
+	// Checks if Peer has at least One Piece
+    public Boolean hasAtLeastOnePiece() {
         for (BitField  b : this.bitfield.fields) {
-			if (b.data != 0) {
+			if (!b.empty) {
 				return true;
             }
         }
         return false;
     }
-	
-	public ArrayList<Integer> bitfieldArrayDiff(BitField[] peerArr) {
-		// Returns array of pieces that neighbor peer has that current peer doesn't
-		ArrayList<Integer> hasPieces = new ArrayList<Integer>();
-		
-		for (BitField  b : this.bitfield.fields) {
-			for (BitField  p : peerArr) {
-				if (b.data == 0 && p.data != 0) {
-					hasPieces.add(b.id);
-				}
-			}
-		}
 
-		return hasPieces;
-	}
-	
+	// Writes Logging Message To Log File
     public void writeToLog(String log) {
-        // TODO: Add Semaphore?
         try {
+			PeerLog.set_lock();
             FileWriter writer = new FileWriter(this.logPath, true);
-			// TODO: Maybe move time to PeerLog File?
             String message = "[" + Client_Utils.getDateTime() + "]: " + log + "\n";
             writer.write(message);
             writer.close();
         } catch (IOException e) {
-            System.out.println("An error occurred.");
+			System.out.println("An error occurred.");
             e.printStackTrace();
-        }
+        } finally {
+			PeerLog.release_lock();
+		}
     }
 
-	public Peer[] getPreferredNeighbors() {
-		// TODO: Implement
-		return null;
-	}
-	
-	public int currNumOfPieces() {
-		return this.bitfield.currBitFieldSize();
+	// Imports Data From File
+	public void importFile(String path) {
+		byte[] dataArr = Client_Utils.getFileBytes(path);
+		byte[] currPiece;
+
+		for (int i=0, start=0; start < Client_Utils.getFileSize(); i++, start += Client_Utils.getPieceSize()) {
+			currPiece = Arrays.copyOfRange(dataArr, start, start + Client_Utils.getPieceSize());
+			this.bitfield.fields[i].setPiece(currPiece, currPiece.length);
+		}
 	}
 }

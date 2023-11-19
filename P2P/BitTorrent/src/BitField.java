@@ -1,29 +1,28 @@
 import java.io.Serializable;
 
 public class BitField implements Serializable {
-    // Class Representing Singular BitField in BitFieldArray
     private static final long serialVersionUID = 1005L;
-
-    public int data = 0; // Data stored as int between 0 and 255
+    
+    // Class Representing Singular BitField in BitFieldArray
+    public byte[] data;
     public int id;
+    public int length;
+    public Boolean empty = true;
 
     public BitField(){};
 
-    public BitField(int val, int _id) {
+    public BitField(byte[] val, int _id) {
         this.id = _id;
         setData(val);
     }
 
-    public void setData(int val) {
-        if (this.checkIfValidByte(val)) {
-            this.data = val;
-        } else {
-            throw new IllegalArgumentException("Value " + val + " Not Valid Byte!");
-        }
-
+    public void setData(byte[] val) {
+        this.data = val;
     }
 
-    public Boolean checkIfValidByte(int val) {
-        return (val >= 0 && val <= 255);
+    public void setPiece(byte[] data, int size) {
+        this.length = size;
+        setData(data);
+        this.empty = false;
     }
 }

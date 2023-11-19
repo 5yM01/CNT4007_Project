@@ -2,15 +2,13 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.HashSet;
+
 
 public class PeerExchangeHandler extends Thread {
     // Class Representing P2P Exhange Between Peers
-	// Peer A: "Client" Peer that initiates connection (Peer running program)
-	// Peer B: "Server" Peer that has open connection
+	// Peer A: "Client" Peer that Initiates Connection
+	// Peer B: "Server" Peer that has Open Connection
 
 	// TCP Connection Variables
 	private Socket connection;
@@ -20,43 +18,48 @@ public class PeerExchangeHandler extends Thread {
 	// Current Peer Information
 	private Peer myPeer;
 	private Boolean listener;
-	
-	// Neighbor Peer Information
-	private Peer peer = null;
-	private BitFieldArray peerBitfield;
-	private Boolean peerInterested;
-	private ArrayList<Integer> piecesToGet;
+	private Boolean hasInitiated = false;
+	private Boolean isInterested = false;
+	private Boolean isPieceExchanging = true;
+	private Boolean isReceiving = false;
+	private Boolean isUnchoked = false;
+	private HashSet<Integer> piecesNeeded = new HashSet<>();
 
-	// Common.cfg Variables
-	private int NumberOfPreferredNeighbors;
-    private int UnchokingInterval;
-    private int OptimisticUnchokingInterval;
-	
-	// Piece Exchange Variables
-	ScheduledExecutorService taskScheduler;
+	// Neighbor Peer Information
+	private Peer neighborPeer = null;
+	private Integer neighborID;
+	private Handshake_Msg neighborHandshake;
+	private BitFieldArray neighborBitfield = null;
+	private Boolean neighborHasFile = false;
+	private Boolean neighborInterested = false;
+	private Boolean neighborOptimisticallyChoked = false;
+	private Boolean neighborUnchoked = false;
+	private HashSet<Integer> piecesToGetFromNeighbor = new HashSet<>();
+
 
 	// Constructors & Initialization
 
 	public PeerExchangeHandler(Socket connection, Peer _myPeer) throws IOException {
-		// Constructor for Listener
+		// Constructor for Listener (Peer B)
 		this.connection = connection;
 		construct(_myPeer, true);
 	}
 	
 	public PeerExchangeHandler(Peer _peer, Peer _myPeer) throws IOException {
-		// Constructor for Peer Initiating Connection
+		// Constructor for Peer Initiating Connection (Peer A)
 		this.connection = new Socket(_peer.peerAddress, _peer.peerPort);
-		this.peer = _peer;
+		this.neighborPeer = _peer;
 		construct(_myPeer, false);
 	}
 
-	public void construct(Peer _myPeer, Boolean isListener) throws IOException {
+	private void construct(Peer _myPeer, Boolean isListener) throws IOException {
 		this.myPeer = _myPeer;
+		piecesNeeded = myPeer.bitfield.piecesNeeded();
 		setListener(isListener);
 		init_streams();
 	}
 
-	public void init_streams() throws IOException {
+	private void init_streams() throws IOException {
 		//Initialize Input and Output Streams
 		out = new ObjectOutputStream(this.connection.getOutputStream());
 		out.flush();
@@ -66,19 +69,15 @@ public class PeerExchangeHandler extends Thread {
 	// Main P2P Function
 
 	public void run() {
-		// Initial Contact
 		try {
 			init_contact();
-		} catch (ClassNotFoundException | IOException e) {
-			// TODO Auto-generated catch block
+			setHasInitiated(true);
+			pieceExchange();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
-		// Continuously Choose Neighbors
-		Runnable task = new Runnable() {
-			public void run () {preferred_neighbors();}
-		};
-		taskScheduler.scheduleAtFixedRate(task, 0, UnchokingInterval, TimeUnit.SECONDS);
 	}
 
 	// P2P Initial Handshake & Bitfield Exchange
@@ -87,117 +86,344 @@ public class PeerExchangeHandler extends Thread {
         System.out.println("Handshake and Bitfield");
 
 		// Handshake
-		Handshake_Msg response = handshake_exg();
+		handshake_exg();
 
 		// Bitfield
-		bitfield_exg(response);
+		bitfield_exg();
     }
 
-	public Handshake_Msg handshake_exg() {
+	public void handshake_exg() {
 		// Handshake Exchange between Peer A and Peer B
-		sendMessage(new Handshake_Msg(myPeer.peerID));
-		Handshake_Msg response = (Handshake_Msg) recvMessage();
+		sendHandshakeMessage();
+		setNeighborHandshake();
 
 		if (isListener()) {
-			String log_msg = PeerLog.log_connected_from(myPeer.peerID, response.getPeerID());
+			String log_msg = PeerLog.log_connected_from(myPeer.peerID, getNeighborHandshake().getPeerID());
 			myPeer.writeToLog(log_msg);
-		}
-
-		// Peer A Checks if its Peer B that has established connection
-		if (!isListener() && !response.checkHS(peer.peerID)) {
+		} else if (!getNeighborHandshake().checkHS(neighborPeer.peerID)) {
+			// Peer A Checks if it's Peer B that has established connection
 			System.out.println("PeerID is not the same or incorrect header!");
 		}
 
-		return response;
+		this.neighborID = getNeighborHandshake().getPeerID();
 	}
 
-	public void bitfield_exg(Handshake_Msg response) {
+	public void bitfield_exg() {
 		// Peer A Sends Bitfield to Peer B
 		// Peer B Sends If It Has Piece
-		if (!isListener() || myPeer.hasAnyPiece()) {
-			Payload load = new Payload(Payload.PayloadTypes.BitFieldArray_Type, myPeer.bitfield);
-			sendMessage(new Actual_Msg(Type.BITFIELD, load));
+		if (!isListener() || myPeer.hasAtLeastOnePiece()) {
+			sendActualMessage(Type.BITFIELD, new Payload(Payload.PayloadTypes.BitFieldArray_Type, myPeer.bitfield));
 		}
 
 		// Peer B Receives Bitfield & Sends Interest Message
 		if (isListener()) {
 			setPeerBitfield((Actual_Msg) recvMessage());
-			setPiecesToGet(myPeer.bitfieldArrayDiff(this.peerBitfield.fields));
-			sendInterestedMessage();
+			setPiecesToGetFromNeighbor(myPeer.bitfield.retainAll(this.neighborBitfield.fields));
+			sendInterestMessage();
 		}
 
-		// Peer B Has Piece & Sends Bitfield to Peer A
 		Actual_Msg msg = (Actual_Msg) recvMessage();
 		if (!isListener() && msg.getMsgType() == Type.BITFIELD) {
+			// Peer B Has Piece & Sends Bitfield to Peer A
 			setPeerBitfield(msg);
-			setPiecesToGet(myPeer.bitfieldArrayDiff(this.peerBitfield.fields));
-			sendInterestedMessage();
+			setPiecesToGetFromNeighbor(myPeer.bitfield.retainAll(this.neighborBitfield.fields));
+			sendInterestMessage();
 			msg = (Actual_Msg) recvMessage();
 		} else if (!isListener()) {
-			// TODO: Send not interested from Peer A to Peer B if Peer B does not have any pieces
-			sendMessage(new Actual_Msg(Type.NOT_INTERESTED));
+			// Peer A Sends Not Interested if BitField Not Received from Peer B
+			neighborBitfield = new BitFieldArray(myPeer.bitfield.totalLength);
+			sendActualMessage(Type.NOT_INTERESTED);
 		}
 
 		// Interest Exchange Between Peers
 		if (msg.getMsgType() == Type.INTERESTED || msg.getMsgType() == Type.NOT_INTERESTED) {
-			setInterested(msg, response.getPeerID());
-		} else {
-			System.out.println("Message Type not allowed yet!");
+			setNeighborInterested(msg);
 		}
 	}
 
-	// P2P Piece Exchange & Neighbor Selection
+	// P2P Piece Exchange
 
-    public void preferred_neighbors() {
-        // Calculate downloading rate
-        download_rates();
-        
-    }
+	public void pieceExchange() {
+		// If Neighbor Unchoked & Neighbor Interested, Send Pieces To Them
+		// If Unchoked By Neighbor & Still Interested, Receive Pieces From Them
+		// FIXME: Test Capability for More Than 2 Peers
+		String log_message = "";
+		while (!bothAreComplete()) {
+			try {
+				Actual_Msg msg = (Actual_Msg) recvMessage();
 
-    public void download_rates() {
-        System.out.println("Calculate Download Rates and Choose top k");
-    }
+				switch (msg.getMsgType()) {
+					case CHOKE:
+						// Neighbor has Choked Connection
+						setIsUnchoked(false);
+						break;
+
+					case UNCHOKE:
+						// Neighbor has Unchoked Connection
+						setIsUnchoked(true);
+						sendRequestMessage();
+						break;
+						
+					case INTERESTED:
+					case NOT_INTERESTED:
+						// Neighbor Has Shown Interest/Uninterest
+						setNeighborInterested(msg);
+						break;
+
+					case HAVE:
+						// Neighbor Has Obtained Piece
+						Integer pieceID = msg.getPayload().getPayloadIndex();
+
+						// Update Neighbor Bitfield
+						neighborBitfield.fields[pieceID].empty = false;
+						
+						log_message = PeerLog.log_Have(myPeer.peerID, getNeighborID(), pieceID);
+						myPeer.writeToLog(log_message);
+
+						// Determine Whether to Send Interested
+						if (piecesNeeded.contains(pieceID)) {
+							piecesToGetFromNeighbor.add(pieceID);
+							sendInterestMessage();
+						}
+
+						break;
+
+					case REQUEST:
+						if (!getNeighborUnchoked()) {
+							continue;
+						}
+
+						// Neighbor Wants Piece
+						sendPiece(msg.getPayload());
+
+						// Adds to Neighbors Download Count
+						Client_Utils.pieceSent(neighborID);
+
+						break;
+					
+					case PIECE:
+						// Peer Receives Piece From Neighbor
+						extractPiece(msg.getPayload());
+
+						if (isComplete()) {
+							log_message = PeerLog.log_Complete(myPeer.peerID);
+							myPeer.writeToLog(log_message);
+						} else if (!piecesToGetFromNeighbor.isEmpty()) {
+							// TODO: Fix?
+							// if (!isUnchoked) {
+							// }
+							sendRequestMessage();
+						} else {
+							sendInterestMessage();
+						}
+						break;
+
+					default:
+						break;
+				}
+			} finally {
+				// TODO: Check why?
+				// setIsPieceExchanging(false);
+			}
+		}
+	}
 
 	// Helper Functions
 
-	public void sendInterestedMessage() {
-		if (getPiecesToGet().size() != 0) {
-			sendMessage(new Actual_Msg(Type.INTERESTED));
+	public void sendHandshakeMessage() {
+		sendMessage(new Handshake_Msg(myPeer.peerID));
+	}
+
+	public void sendActualMessage(Type _msgType) {
+		sendMessage(new Actual_Msg(_msgType));
+	}
+
+	public void sendActualMessage(Type _msgType, Payload data) {
+		sendMessage(new Actual_Msg(_msgType, data));
+	}
+
+	public void sendInterestMessage() {
+		if (!getPiecesToGetFromNeighbor().isEmpty()) {
+			setIsInterested(true);
+			sendActualMessage(Type.INTERESTED);
 		} else {
-			sendMessage(new Actual_Msg(Type.NOT_INTERESTED));
+			setIsInterested(false);
+			sendActualMessage(Type.NOT_INTERESTED);
 		}
 	}
-	
+
+	public void unchokeExchange() {
+		sendUnchokeMessage();
+		setNeighborUnchoked(true);
+	}
+
+	public void chokeExchange() {
+		sendChokeMessage();
+		setNeighborUnchoked(false);
+	}
+
+	public void sendUnchokeMessage() {
+		if (neighborInterested) {
+			sendActualMessage(Type.UNCHOKE);
+		}
+	}
+
+	public void sendChokeMessage() {
+		sendActualMessage(Type.CHOKE);
+	}
+
+	public void sendRequestMessage() {
+		// Select Random Piece from Neighbor that MyPeer Doesn't Have
+		Integer pieceID = Client_Utils.randomSetValue(piecesToGetFromNeighbor);
+		sendActualMessage(Type.REQUEST, new Payload(Payload.PayloadTypes.PieceIndex_Type, pieceID));
+	}
+
+	public void sendPiece(Payload pieceInfo) {
+		// Determines Piece Requested & Sends to Neighbor
+		BitField data = myPeer.bitfield.fields[pieceInfo.getPayloadIndex()];
+		sendActualMessage(Type.PIECE, new Payload(Payload.PayloadTypes.PieceContent_Type, data));
+	}
+
+	public void extractPiece(Payload load) {
+		BitField piece = load.getPayloadPiece();
+		
+		// Send Have To All Neighbors
+		Client_Utils.sendHaveToAll(piece.id);
+
+		// Add to MyPeer's Bitfield
+		myPeer.bitfield.setArrayPiece(piece);
+
+		// TODO: Download By Piece or Download When Done?
+
+		piecesNeeded.remove(piece.id);
+		piecesToGetFromNeighbor.remove(piece.id);
+
+		String log_message = PeerLog.log_Downloaded_piece(myPeer, getNeighborID(), piece.id);
+		myPeer.writeToLog(log_message);
+	}
+
+	public Boolean isComplete() {
+		// Checks if MyPeer Has Complete File
+		myPeer.peerHasFile = piecesNeeded.isEmpty();
+		return myPeer.peerHasFile;
+	}
+
+	public Boolean checkIfNeighborComplete() {
+		// Checks if Neighbor Has Complete File
+		setNeighborHasFile(neighborBitfield.piecesNeeded().isEmpty());
+		return this.neighborHasFile;
+	}
+
+	private boolean bothAreComplete() {
+		return isComplete() && checkIfNeighborComplete();
+	}
+
 	// Variable GET & SET
 
-	public void setInterested(Actual_Msg msg, int peerID) {
+	public void setNeighborInterested(Actual_Msg msg) {
 		String log_msg;
 		
-		this.peerInterested = (msg.getMsgType() == Type.INTERESTED);
+		this.neighborInterested = (msg.getMsgType() == Type.INTERESTED);
 
-		if (this.peerInterested) {
-			log_msg = PeerLog.log_is_interested(myPeer.peerID, peerID);
+		if (this.neighborInterested) {
+			log_msg = PeerLog.log_is_interested(myPeer.peerID, getNeighborID());
 		} else {
-			log_msg = PeerLog.log_not_interested(myPeer.peerID, peerID);
+			log_msg = PeerLog.log_not_interested(myPeer.peerID, getNeighborID());
 		}
 		
 		myPeer.writeToLog(log_msg);
 	}
 
-	public BitFieldArray getPeerBitfield() {
-		return peerBitfield;
+	public Boolean getHasInitiated() {
+		return hasInitiated;
+	}
+
+	public void setHasInitiated(Boolean hasInitiated) {
+		this.hasInitiated = hasInitiated;
+	}
+
+	public Boolean getNeighborUnchoked() {
+		return neighborUnchoked;
+	}
+
+	public void setNeighborUnchoked(Boolean neighborUnchoked) {
+		this.neighborUnchoked = neighborUnchoked;
+	}
+
+	public Boolean getNeighborHasFile() {
+		return neighborHasFile;
+	}
+
+	public void setNeighborHasFile(Boolean neighborHasFile) {
+		this.neighborHasFile = neighborHasFile;
+	}
+
+	public void setNeighborHandshake() {
+		this.neighborHandshake = (Handshake_Msg) recvMessage();
+	}
+
+	public Boolean getIsInterested() {
+		return isInterested;
+	}
+
+	public void setIsInterested(Boolean isInterested) {
+		this.isInterested = isInterested;
+	}
+
+	public Handshake_Msg getNeighborHandshake() {
+		return neighborHandshake;
+	}
+
+	public Boolean getIsReceiving() {
+		return isReceiving;
+	}
+
+	public void setIsReceiving(Boolean isReceiving) {
+		this.isReceiving = isReceiving;
+	}
+
+	public void setIsUnchoked(Boolean isUnchoked) {
+		this.isUnchoked = isUnchoked;
+	}
+
+	public Boolean getIsPieceExchanging() {
+		return isPieceExchanging;
+	}
+
+	public void setIsPieceExchanging(Boolean isPieceExchanging) {
+		this.isPieceExchanging = isPieceExchanging;
+	}
+
+	public Boolean getNeighborOptimisticallyChoked() {
+		return neighborOptimisticallyChoked;
+	}
+
+	public void setNeighborOptimisticallyChoked(Boolean optimisticallyChoked) {
+		this.neighborOptimisticallyChoked = optimisticallyChoked;
+	}
+
+	public Boolean getIsUnchoked() {
+		return isUnchoked;
+	}
+
+	public Integer getNeighborID() {
+		return neighborID;
+	}
+
+	public Boolean getNeighborInterested() {
+		return neighborInterested;
 	}
 
 	public void setPeerBitfield(Actual_Msg peerBitfield) {
-		this.peerBitfield = peerBitfield.getPayload().getPayloadBFA();
+		this.neighborBitfield = peerBitfield.getPayload().getPayloadBFA();
 	}
 
-	public ArrayList<Integer> getPiecesToGet() {
-		return piecesToGet;
+	public HashSet<Integer> getPiecesToGetFromNeighbor() {
+		return piecesToGetFromNeighbor;
 	}
 
-	public void setPiecesToGet(ArrayList<Integer> piecesToGet) {
-		this.piecesToGet = piecesToGet;
+	public void setPiecesToGetFromNeighbor(HashSet<Integer> piecesToGet) {
+		this.piecesToGetFromNeighbor = piecesToGet;
 	}
 	
 	public Boolean isListener() {
@@ -207,13 +433,6 @@ public class PeerExchangeHandler extends Thread {
 	public void setListener(Boolean listener) {
 		this.listener = listener;
 	}
-
-    public void setNeighborTiming(int pref, int unchoking, int optimistic) {
-        this.NumberOfPreferredNeighbors = pref;
-        this.UnchokingInterval = unchoking;
-        this.OptimisticUnchokingInterval = optimistic;
-		this.taskScheduler = Executors.newScheduledThreadPool(pref);
-    }
 
 	// TCP Connection
 

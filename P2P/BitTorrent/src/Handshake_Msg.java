@@ -5,17 +5,28 @@ public class Handshake_Msg implements Message, Serializable {
 
     // Class Representing Handshake Message
     private String header = "P2PFILESHARINGPROJ";
-    private byte[] zeroBits = new byte[10];
+    private byte[] zeroBits;
     private int peerID;
 
-    public Handshake_Msg() {}
+    private int msg_length;
 
+    // Constructor For Handshake Message
     public Handshake_Msg(int id) {
         this.peerID = id;
+        this.zeroBits = new byte[10];
+        setLength();
     }
 
-    public void print() {
-        System.out.println("Header: " + header + "\nID: " + peerID);
+    public int getPeerID() {
+        return peerID;
+    }
+
+    public Integer getLength() {
+        return this.msg_length;
+    }
+
+    public void setLength() {
+        this.msg_length = header.length() + zeroBits.length + 4;
     }
 
     public Boolean checkHeader() {
@@ -24,9 +35,5 @@ public class Handshake_Msg implements Message, Serializable {
 
     public Boolean checkHS(int id) {
         return this.peerID == id || this.checkHeader();
-    }
-
-    public int getPeerID() {
-        return peerID;
     }
 }
