@@ -8,15 +8,17 @@ public class Peer {
 	public String peerAddress;
 	public int peerPort;
 	public Boolean peerHasFile;
+	public long peerRate;
 	public BitFieldArray bitfield;
 	public String logPath;
 
-	public Peer(String pId, String pAddress, String pPort, String hasFile, int bitFieldLength) {
+	public Peer(String pId, String pAddress, String pPort, String hasFile, long peerRate, int bitFieldLength) {
 		this.peerID = Integer.parseInt(pId);
 		this.peerAddress = pAddress;
 		this.peerPort = Integer.parseInt(pPort);
         this.peerHasFile = (Integer.parseInt(hasFile) == 1);
 		this.logPath = "log_peer_" + pId + ".log";
+		this.peerRate = 0;
 		initBitField(bitFieldLength);
 	}
 

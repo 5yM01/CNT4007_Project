@@ -77,7 +77,7 @@ public class PeerClient {
     public static void peerinfo_config_init() {
         for (String line : Client_Utils.read_file("PeerInfo.cfg")) {
             String[] tokens = line.split("\\s+");
-            peerList.add(new Peer(tokens[0], tokens[1], tokens[2], tokens[3], BitFieldLength));
+            peerList.add(new Peer(tokens[0], tokens[1], tokens[2], tokens[3],0, BitFieldLength));
         }
     }
     

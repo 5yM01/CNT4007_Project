@@ -26,6 +26,8 @@ public class PeerExchangeHandler extends Thread {
 	private Peer peer = null;
 	private BitFieldArray peerBitfield;
 	private Boolean peerInterested;
+	private Boolean peerChoked;
+	private Boolean peerUnChoked;
 	private ArrayList<Integer> piecesToGet;
 
 	// Common.cfg Variables
@@ -162,56 +164,84 @@ public class PeerExchangeHandler extends Thread {
     public void download_rates() {
         System.out.println("Calculate Download Rates and Choose top k");
 
+		int[] selectedNeighborsIndex = new int[NumberOfPreferredNeighbors];
+
 		//IF Peer A (Peer initiating connection) has a COMPLETE file -> determine preferred neighbors randomly
 		if(peer.peerHasFile){
 			System.out.println("Determine preferred neighbors randomly");
 
-			int[] selectedNeighborsIndex = new int[NumberOfPreferredNeighbors];
-
 			int counter = 0;
 			while(counter < NumberOfPreferredNeighbors){
+				boolean skip = false;
 				int randomNeighborNum = ThreadLocalRandom.current().nextInt(0, NumberOfPreferredNeighbors + 1);
-				selectedNeighborsIndex[counter] = randomNeighborNum;
-				counter++;
+
+				//case where neighbor has already been picked -> skip
+				for(int index = 0; index < selectedNeighborsIndex.length; index++){
+					if (randomNeighborNum == selectedNeighborsIndex[index]){
+						skip = true;
+					}
+				}
+
+				if(!skip){
+					selectedNeighborsIndex[counter] = randomNeighborNum;
+					counter++;
+				}
 			}
 		}
 		//IF NOT -> follow 1 and 2 below
+		else{
+			//1. Every P seconds, Peer A selects preferred neighbors
+			//1a. Calculate download rate for each neighbor
+			ArrayList<Long> rates = new ArrayList<>();
 
-		//1. Every P seconds, Peer A selects preferred neighbors
-		//1a. Calculate download rate for each neighbor
-		ArrayList<Long> rates = new ArrayList<>();
+			for(int i = 0; i < myPeerNeighbors.size(); i++){
+				long start = System.nanoTime();
+				//send these bytes to peer
+				byte[] byteTestArr = new byte[1024];
+				//TODO: figure out sending bytes to each peer on one connection (also rate calculation might be wrong)
+				Peer peerRateTest = myPeerNeighbors.get(i);
+				long end = System.nanoTime();
+				long totalTime = end - start;
+				long downloadRate = 1024 / totalTime;
 
-		for(int i = 0; i < myPeerNeighbors.size(); i++){
-			long start = System.nanoTime();
-			//send these bytes to peer
-			byte[] byteTestArr = new byte[1024];
-			//TODO: figure out sending bytes to each peer on one connection (also rate calculation might be wrong)
-			Peer peerRateTest = myPeerNeighbors.get(i);
-			long end = System.nanoTime();
-			long totalTime = end - start;
-			long downloadRate = 1024 / totalTime;
-			rates.add(downloadRate);
-		}
-		//sort rate list in ascending order
-		rates.sort(null);
+				//set peer rate class variable for neighbor peer
+				setPeerRate(peerRateTest, downloadRate);
 
-		//1b. Pick k neighbors with highest rates (that are 'interested')
-		ArrayList<Long> selectedNeighbors = new ArrayList<>();
-		for(int j = 0; j < NumberOfPreferredNeighbors; j++){
-			// Same download rate? -> pick randomly
-			//TODO: Associate rates with neighbor peers (Map?)
-			System.out.println("Check neighbor rates here");
+				rates.add(downloadRate);
+			}
+			//sort rate list in ascending order
+			rates.sort(null);
+
+			//1b. Pick k neighbors with highest rates (that are 'interested')
+			ArrayList<Long> selectedNeighbors = new ArrayList<>();
+			for(int j = 0; j < NumberOfPreferredNeighbors; j++){
+				// Same download rate? -> pick randomly
+				//TODO: Associate rates with neighbor peers (Map?)
+				System.out.println("Check neighbor rates here");
+			}
 		}
 
 		//2. Unchoke selected neighbors
 		//2a. Send unchoke msgs, expect same number of request msgs back
-		sendUnchokeMessage();
 		//2b. Don't send unchoke msg if neighbor is already unchoked
-		//2c. All previously unchoked neighbors become choked, unless optimistic (send msgs, stop sending pieces to them)
+		//TODO: apply to multiple neighbors (how about receiving peer behavior?)
+		sendUnchokeMessage();
+		recvMessage();
+		//---- check if neighbor is unchoked -> class variable?
+		//---- if YES -> send msg
+
+		//2c. All previously unchoked and unselected neighbors become choked, unless optimistic (send msgs, stop sending pieces to them)
+		//---- send choked msgs to all unchoked neighbors
+		//TODO: apply to multiple neighbors
+		sendChokeMessage();
 
 		//3. Peer determines an optimistically unchoked neighbor every m seconds
 		//3a. Selects randomly among INTERESTED and CHOKED neighbors
+		//---- check each neighbor for these variables -> class variables?
 		//3b. Send unchoke msg, expect request msg back
+		//TODO: apply to multiple neighbors
+		sendUnchokeMessage();
+		recvMessage();
 		//3c. A peer can be both preferred and optimistically unchoked
     }
 
@@ -231,6 +261,10 @@ public class PeerExchangeHandler extends Thread {
 			sendMessage(new Actual_Msg(Type.UNCHOKE));
 		}
 	}
+
+	public void sendChokeMessage() {
+		sendMessage(new Actual_Msg(Type.CHOKE));
+	}
 	
 	// Variable GET & SET
 
@@ -248,8 +282,43 @@ public class PeerExchangeHandler extends Thread {
 		myPeer.writeToLog(log_msg);
 	}
 
+	public void setChoked(Actual_Msg msg, int peerID) {
+		String log_msg;
+
+		this.peerChoked = (msg.getMsgType() == Type.CHOKE);
+
+		if (this.peerChoked) {
+			log_msg = PeerLog.log_Choke(myPeer.peerID, peerID);
+			myPeer.writeToLog(log_msg);
+		}
+
+		//Might not need to unchoke if msg says nothing?
+//		else {
+//			log_msg = PeerLog.log_Unchoke(myPeer.peerID, peerID);
+//		}
+
+		//myPeer.writeToLog(log_msg);
+	}
+
+	public void setUnChoked(Actual_Msg msg, int peerID) {
+		String log_msg;
+
+		this.peerUnChoked = (msg.getMsgType() == Type.UNCHOKE);
+
+		if (this.peerUnChoked) {
+			log_msg = PeerLog.log_Unchoke(myPeer.peerID, peerID);
+			myPeer.writeToLog(log_msg);
+		}
+
+		//myPeer.writeToLog(log_msg);
+	}
+
 	public BitFieldArray getPeerBitfield() {
 		return peerBitfield;
+	}
+
+	public void setPeerRate(Peer peer, long rate){
+		peer.peerRate = rate;
 	}
 
 	public void setPeerBitfield(Actual_Msg peerBitfield) {
