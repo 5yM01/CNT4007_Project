@@ -185,7 +185,7 @@ public class Client_Utils {
     // Sends a HAVE message to all neighbors
     public static void sendHaveToAll(Integer pieceID) {
         for (PeerExchangeHandler peh : getPeerConnections()) {
-            peh.sendActualMessage(Type.HAVE, new Payload(Payload.PayloadTypes.PieceIndex_Type, pieceID));
+            peh.sendHaveMessage(pieceID);
         }
     }
 

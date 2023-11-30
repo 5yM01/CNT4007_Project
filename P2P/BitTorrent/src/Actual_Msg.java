@@ -4,9 +4,9 @@ public class Actual_Msg implements Message, Serializable {
     private static final long serialVersionUID = 1002L;
 
     // Class Representing Actual Message
-    private int msg_length;
     private Type msgType;
     private Payload payload;
+    private int msg_length;
 
     // Constructor For Message With No Payload
     public Actual_Msg(Type _type) {

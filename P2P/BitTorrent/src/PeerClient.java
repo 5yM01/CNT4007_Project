@@ -302,6 +302,16 @@ public class PeerClient {
         }
     }
 
+    // Pieces Needed Functions
+
+    public static void removePieceFromNeeded(BitField bf) {
+        myPeer.bitfield.setArrayPiece(bf);
+    }
+
+    public static HashSet<Integer> getPiecesNeeded() {
+        return myPeer.bitfield.piecesNeeded();
+    }
+
     // TCP Connections Closed
     public static void close_connections() throws IOException {
         for (PeerExchangeHandler s : peerConnections) {
