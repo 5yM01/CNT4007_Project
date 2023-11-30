@@ -27,7 +27,7 @@ public class PeerExchangeHandler extends Thread {
 	private Peer neighborPeer = null;
 	private Integer neighborID;
 	private Handshake_Msg neighborHandshake;
-	private BitFieldArray neighborBitfield = null;
+	private BitFieldArrayBits neighborBitfield = null;
 	private Boolean neighborHasFile = false;
 	private Boolean neighborInterested = false;
 	private Boolean neighborOptimisticallyChoked = false;
@@ -57,7 +57,7 @@ public class PeerExchangeHandler extends Thread {
 	}
 
 	private void init_streams() throws IOException {
-		//Initialize Input and Output Streams
+		// Initialize Input and Output Streams
 		out = new ObjectOutputStream(this.connection.getOutputStream());
 		out.flush();
 		in = new ObjectInputStream(this.connection.getInputStream());
@@ -126,7 +126,7 @@ public class PeerExchangeHandler extends Thread {
 			msg = (Actual_Msg) recvMessage();
 		} else if (!isListener()) {
 			// Peer A Sends Not Interested if BitField Not Received from Peer B
-			neighborBitfield = new BitFieldArray(myPeer.bitfield.totalLength);
+			neighborBitfield = new BitFieldArrayBits(myPeer.bitfield.totalLength);
 			sendInterestMessage();
 		}
 
@@ -168,7 +168,7 @@ public class PeerExchangeHandler extends Thread {
 					Integer pieceID = msg.getPayload().getPayloadIndex();
 
 					// Update Neighbor Bitfield
-					neighborBitfield.fields[pieceID].empty = false;
+					neighborBitfield.fields[pieceID] = 1;
 					
 					log_message = PeerLog.log_Have(myPeer.peerID, getNeighborID(), pieceID);
 					myPeer.writeToLog(log_message);
@@ -231,7 +231,7 @@ public class PeerExchangeHandler extends Thread {
 	}
 
 	public void sendBitFieldMessage() {
-		sendActualMessage(Type.BITFIELD, new Payload(Payload.PayloadTypes.BitFieldArray_Type, myPeer.bitfield));
+		sendActualMessage(Type.BITFIELD, new Payload(Payload.PayloadTypes.BitFieldArray_Type, myPeer.bitfield_bits));
 	}
 
 	public void sendInterestMessage() {
@@ -273,7 +273,7 @@ public class PeerExchangeHandler extends Thread {
 
 	public void sendPiece(Payload pieceInfo) {
 		// Determines Piece Requested & Sends to Neighbor
-		BitField data = myPeer.bitfield.fields[pieceInfo.getPayloadIndex()];
+		BitField data = myPeer.bitfield.data_fields[pieceInfo.getPayloadIndex()];
 		sendActualMessage(Type.PIECE, new Payload(Payload.PayloadTypes.PieceContent_Type, data));
 	}
 
@@ -428,7 +428,6 @@ public class PeerExchangeHandler extends Thread {
 
 	public synchronized void sendMessage(Message msg) {
 		try {
-			Client_Utils.waitTime(500);
 			out.writeObject(msg);
 			out.flush();
 		} catch (IOException ioException) {

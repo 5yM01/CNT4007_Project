@@ -5,7 +5,7 @@ public class Payload implements Serializable {
 
     // Class Representing the Payload For An Actual Message
     private PayloadTypes type;
-    private BitFieldArray bfa = null;
+    private BitFieldArrayBits bfa = null;
     private Integer index = null;
     private BitField content = null;
 
@@ -16,9 +16,9 @@ public class Payload implements Serializable {
     }
 
     // Constructor For Payload With Bitfield Array (Bitfield)
-    public Payload(PayloadTypes _type, BitFieldArray data) {
+    public Payload(PayloadTypes _type, BitFieldArrayBits bitfield_bits) {
         this.type = _type;
-        this.bfa = data;
+        this.bfa = bitfield_bits;
     }
 
     // Constructor For Payload With Piece Index (Request/Have)
@@ -41,7 +41,7 @@ public class Payload implements Serializable {
         this.type = type;
     }
 
-    public BitFieldArray getPayloadBFA() {
+    public BitFieldArrayBits getPayloadBFA() {
         return this.bfa;
     }
 

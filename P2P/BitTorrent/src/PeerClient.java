@@ -147,6 +147,7 @@ public class PeerClient {
 
     // Exchange
     public static void p2p_exchange() {
+        // TODO: Remove Wait?
         // Waits until all Peers have Completed Handshake & Bitfield Exchange
         Client_Utils.waitUntilAllPeersHaveInitiated();
 

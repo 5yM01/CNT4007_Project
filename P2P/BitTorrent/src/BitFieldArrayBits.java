@@ -1,34 +1,21 @@
 import java.io.Serializable;
 import java.util.HashSet;
 
-public class BitFieldArray implements Serializable {
-    private static final long serialVersionUID = 1004L;
-
-    // Class Representing Peer Bitfield Array
-    public BitField[] data_fields;
+public class BitFieldArrayBits implements Serializable {
+    public int[] fields;
     public int totalLength;
 
-    public BitFieldArray(){};
-
-    public BitFieldArray(int size) {
-        this.data_fields = new BitField[size];
+    public BitFieldArrayBits(int size) {
         this.totalLength = size;
-        setFields();
-    }
-
-    // Initializes Fields of Array
-    public void setFields() {
-        for (int i = 0; i < this.totalLength; i++) {
-            this.data_fields[i] = new BitField(new byte[Client_Utils.getPieceSize()], i);
-        }
+        this.fields = new int[this.totalLength];
     }
 
     // Calculates Current Array Size
     public int currSize() {
         int curr = 0;
 
-        for (BitField  b : this.data_fields) {
-            if (!b.empty) {
+        for (int b : this.fields) {
+            if (b == 1) {
                 curr += 1;
             };
         }
@@ -37,16 +24,16 @@ public class BitFieldArray implements Serializable {
     }
 
     // Sets Piece in Array
-    public void setArrayPiece(BitField bf) {
-        this.data_fields[bf.id].setPiece(bf.data, bf.length);
+    public void setArrayPiece(int index) {
+        this.fields[index] = 1;
     }
 
     // Determines Pieces Peer Needs
     public HashSet<Integer> piecesNeeded() {
         HashSet<Integer> counter = new HashSet<Integer>();
-        for (BitField  b : this.data_fields) {
-            if (b.empty) {
-                counter.add(b.id);
+        for (int i = 0; i < this.totalLength; i++) {
+            if (this.fields[i] == 0) {
+                counter.add(i);
             }
         }
 
@@ -66,14 +53,13 @@ public class BitFieldArray implements Serializable {
 	// Returns set of pieces that neighbor peer has that current peer doesn't
 	public HashSet<Integer> retainAll(int[] peerArr) {
 		HashSet<Integer> hasPieces = new HashSet<Integer>();
-        BitField b;
-        int p;
+        int b, p;
 		
         for (int i = 0; i < this.totalLength; i++) {
-            b = this.data_fields[i];
+            b = this.fields[i];
             p = peerArr[i];
 
-            if (b.empty && p != 0) {
+            if (b == 0 && p != 0) {
                 hasPieces.add(i);
             }
         }

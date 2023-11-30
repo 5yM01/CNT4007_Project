@@ -9,6 +9,7 @@ public class Peer {
 	public int peerPort;
 	public Boolean peerHasFile;
 	public BitFieldArray bitfield;
+	public BitFieldArrayBits bitfield_bits;
 	public String logPath;
 
 	// Peer Constructor
@@ -24,11 +25,12 @@ public class Peer {
 	// Creates Bitfield for Peer
 	public void initBitField(int length) {
 		this.bitfield = new BitFieldArray(length);
+		this.bitfield_bits = new BitFieldArrayBits(length);
 	}
 
 	// Checks if Peer has at least One Piece
     public Boolean hasAtLeastOnePiece() {
-        for (BitField  b : this.bitfield.fields) {
+        for (BitField  b : this.bitfield.data_fields) {
 			if (!b.empty) {
 				return true;
             }
@@ -53,13 +55,16 @@ public class Peer {
     }
 
 	// Imports Data From File
-	public void importFile(String path) {
+	public void importFile(String fname) {
+		String path = fname;
+		// String path = peerID + "/" + fname;
 		byte[] dataArr = Client_Utils.getFileBytes(path);
 		byte[] currPiece;
 
 		for (int i=0, start=0; start < Client_Utils.getFileSize(); i++, start += Client_Utils.getPieceSize()) {
 			currPiece = Arrays.copyOfRange(dataArr, start, start + Client_Utils.getPieceSize());
-			this.bitfield.fields[i].setPiece(currPiece, currPiece.length);
+			this.bitfield.data_fields[i].setPiece(currPiece, currPiece.length);
+			this.bitfield_bits.setArrayPiece(i);
 		}
 	}
 }
