@@ -305,10 +305,6 @@ public class PeerExchangeHandler extends Thread {
 
 		// Add to MyPeer's Bitfield
 		PeerClient.removePieceFromNeeded(piece);
-
-		// TODO: Download By Piece
-
-		PeerClient.removePieceFromNeeded(piece);
 		String log_message = PeerLog.log_Downloaded_piece(myPeer, getNeighborID(), piece.id);
 		myPeer.writeToLog(log_message);
 	}

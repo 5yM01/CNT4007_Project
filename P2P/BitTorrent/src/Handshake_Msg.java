@@ -34,6 +34,6 @@ public class Handshake_Msg implements Message, Serializable {
     }
 
     public Boolean checkHS(int id) {
-        return this.peerID == id || this.checkHeader();
+        return this.peerID == id && this.checkHeader();
     }
 }

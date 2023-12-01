@@ -40,7 +40,6 @@ public class Client_Utils {
             }
             reader.close();
         } catch (FileNotFoundException e) {
-            System.out.println("Error Occured While Trying To Read File " + path);
             e.printStackTrace();
         }
 

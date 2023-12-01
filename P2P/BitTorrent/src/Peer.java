@@ -47,7 +47,6 @@ public class Peer {
             writer.write(message);
             writer.close();
         } catch (IOException e) {
-			System.out.println("An error occurred.");
             e.printStackTrace();
         } finally {
 			PeerLog.release_lock();
