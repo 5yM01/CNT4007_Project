@@ -1,34 +1,20 @@
-CEN5501C PROJECT 2
-README.txt for StartRemotePeers
+step 1: you need to agree 'yes' to connect to each machine (eg. lin114-00, lin114-01). There is probably a way to detect if this is necessary and automate it, but idk how so just run this command for whichever you haven't accessed before:
+ssh lin114-00.cise.ufl.edu; yes; exit
+ssh lin114-01.cise.ufl.edu; yes; exit
+ssh lin114-02.cise.ufl.edu; yes; exit
+ssh lin114-03.cise.ufl.edu; yes; exit
+ssh lin114-04.cise.ufl.edu; yes; exit
 
-This program is for you to start your remote processes easily.
+step 2: Upload and unzip the directory with all the java files. dump StartRemotePeers into src. cd into src. 
+this is the correct contents of PeerInfo.cfg. update if needed:
+1001 lin114-00.cise.ufl.edu 6011 1 
+1002 lin114-01.cise.ufl.edu 6011 0 
+1003 lin114-02.cise.ufl.edu 6011 0 
+1004 lin114-03.cise.ufl.edu 6011 0 
+1005 lin114-04.cise.ufl.edu 6011 0 
 
-The program consists of two java files.
-  StartRemotePeers.java: This is the main class for starting remote processes.
-  RemotePeerInfo.java: This is the class for storing peer infomation.
+step 3: run:
+./compileJava; java StartRemotePeers
+The console should output confirmation of all (5) remote clients being activated. If needed, run chmod +x compileJava to add executable permission to the file. 
 
-Before using them, I recommend that you should look at the codes. 
-Make sure that your peerProcess name is the same as the one used in this program.
-If your peerProcess is written in C or C++, you must modify the StartRemotePeers.java file
-a little bit as described in the file.
-
-The procedure to use this program is as follows.
-
-1. Modify the StartRemotePeers.java appropriately if needed.
-
-2. Copy *.java and compileJava files to your working directory where your peerProcess resides.
-
-3. Compile the java files as follows:
-  ./compileJava
-
-4. run the program as follows:
-  java StartRemotePeers
-
-
-********  IMPORTANT NOTE ********
-This program was only tested on CISE SunOS environment.
-If you use another environment, for example, linux environment in CISE 
-or other environments not in CISE, it is not guaranteed to work properly.
-It is your responsibility to adapt this program to your running environment.
-
-
+step 4: Nano into all the log_peer files to confirm execution of program. The file may take a few minutes to finish sending to all users so be patient. 
