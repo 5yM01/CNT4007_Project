@@ -1,4 +1,0 @@
-find . -name "*.class" -type f -delete
-javac PeerClient.java
-javac RemotePeerInfo.java
-javac StartRemotePeers.java
