@@ -1,3 +1,4 @@
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
@@ -55,8 +56,7 @@ public class Peer {
 
 	// Imports Data From File
 	public void importFile(String fname) {
-		String path = fname;
-		// String path = peerID + "/" + fname;
+		String path = "peer_" + peerID + File.separator + fname;
 		byte[] dataArr = Client_Utils.getFileBytes(path);
 		byte[] currPiece;
 

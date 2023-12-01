@@ -183,7 +183,7 @@ public class PeerClient {
 		if(Client_Utils.allPeersHaveFile()){
 			//write the bitfield array as a file
             //used File.separator so that the path works on both windows and linux
-			String path = "peer" + myPeer.peerID + File.separator + fileName;
+			String path = "peer_" + myPeer.peerID + File.separator + fileName;
 
 			try {
                 //write bytes to file
