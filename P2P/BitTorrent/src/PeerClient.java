@@ -1,3 +1,5 @@
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.ArrayList;
@@ -172,7 +174,38 @@ public class PeerClient {
 
         // Shutdown Scheduler
         taskScheduler.shutdown();
+
+        //download the file to respective peer folders
+        downloadCompleteFile(FileName);
     }
+
+    public static void downloadCompleteFile(String fileName) {
+		if(Client_Utils.allPeersHaveFile()){
+			//write the bitfield array as a file
+            //used File.separator so that the path works on both windows and linux
+			String path = "peer" + myPeer.peerID + File.separator + fileName;
+
+			try {
+                //write bytes to file
+				FileOutputStream fos = new FileOutputStream(path);
+
+				//go through the array and then through bitfields for all bytes -> write them in order
+				BitField bytes[] = myPeer.bitfield.data_fields;
+
+                //write each bit in each bitfield to file
+				for(int i = 0; i < bytes.length; i++){
+					fos.write(bytes[i].data);
+				}
+
+				//close FOS to avoid EOF
+				fos.close();
+
+			}
+			catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
 
     // Neighbor Selection
     public static void neighborSelection(Boolean pref) {
