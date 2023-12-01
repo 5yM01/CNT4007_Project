@@ -28,8 +28,9 @@ public class PeerClient {
     // TCP Connection Info
     static int clientNum = 0;
     static ArrayList<PeerExchangeHandler> peerConnections = new ArrayList<PeerExchangeHandler>();
-
+    
     // P2P Tunnels
+    static HashSet<Integer> piecesRequested = new HashSet<Integer>();
     static HashSet<Integer> preferredNeighbors = new HashSet<Integer>();
     static HashSet<Integer> interestedNeighbors = new HashSet<Integer>();
     static HashSet<Integer> chokedNeighbors = new HashSet<Integer>();
@@ -38,6 +39,7 @@ public class PeerClient {
     // Peers
     static ArrayList<Peer> peerList = new ArrayList<Peer>();
     static PeerExchangeHandler optimisticNeighbor = null;
+    static DownloadRatesHandler download_handler = new DownloadRatesHandler();
     
     // Schedulers
     static ScheduledExecutorService taskScheduler = Executors.newScheduledThreadPool(2);
@@ -54,9 +56,6 @@ public class PeerClient {
 
         // P2P Piece Exchange
         p2p_exchange();
-
-        // Close Connections
-        close_connections();
 
         System.out.println("FIN!");
     }
@@ -123,7 +122,7 @@ public class PeerClient {
         // Loop that Connects Current Peer to all Currently Running Neighbor Peers
         for (int i = clientNum, j = 0; i > 0; i--, j++) {
             Peer currPeer = peerList.get(j);
-            PeerExchangeHandler thread = new PeerExchangeHandler(currPeer, myPeer);
+            PeerExchangeHandler thread = new PeerExchangeHandler(currPeer);
             peerConnections.add(thread);
             thread.start();
 
@@ -136,7 +135,7 @@ public class PeerClient {
         try {
             // Listens To Connections With Remaining Peers On List
             for (int i = clientNum + 1; i < peerList.size(); i++) {
-                PeerExchangeHandler listeningHandler = new PeerExchangeHandler(listener.accept(), myPeer);
+                PeerExchangeHandler listeningHandler = new PeerExchangeHandler(listener.accept());
                 peerConnections.add(listeningHandler);
                 listeningHandler.start();
             }
@@ -147,7 +146,6 @@ public class PeerClient {
 
     // Exchange
     public static void p2p_exchange() {
-        // TODO: Remove Wait?
         // Waits until all Peers have Completed Handshake & Bitfield Exchange
         Client_Utils.waitUntilAllPeersHaveInitiated();
 
@@ -160,10 +158,10 @@ public class PeerClient {
             }
 		};
 		taskScheduler.scheduleAtFixedRate(prefNeighborTask, 0, UnchokingInterval, TimeUnit.SECONDS);
-
+        
         // Continuously Choose Optimistically Unchoked Neighbor
         Runnable optimisticNeighborTask = new Runnable() {
-			public void run () {
+            public void run () {
                 neighborSelection(false);
             }
 		};
@@ -171,10 +169,17 @@ public class PeerClient {
 
         // Waits until all Peers Have Obtained the File
         Client_Utils.waitUntilAllPeersHaveFile();
+
+        // Shutdown Scheduler
+        taskScheduler.shutdown();
     }
 
     // Neighbor Selection
     public static void neighborSelection(Boolean pref) {
+        if (Client_Utils.allPeersHaveFile()) {
+            return;
+        }
+
 		if (myPeer.peerHasFile){
             // Determine preferred neighbors randomly
             selectNeighbors(true, pref);
@@ -188,16 +193,19 @@ public class PeerClient {
         String log_message = "";
         Boolean hasChanged = false;
         updatedInterested();
-        
+
         if (pref) {
             // Select k preferred neighbors
-            preferredNeighbors.clear();
             hasChanged = selectPreferredNeighbors(rand);
-            log_message = PeerLog.log_Preferred_neighbor(myPeer, new ArrayList<Integer>(preferredNeighbors));
+            if (hasChanged) {
+                log_message = PeerLog.log_Preferred_neighbor(myPeer, new ArrayList<Integer>(preferredNeighbors));
+            }
         } else {
             // Select 1 Optimistically Unchoked Neighbor
             hasChanged = selectOptimisticNeighbor();
-            log_message = PeerLog.log_Optimistically_unchoked(myPeer.peerID, Client_Utils.getOptimisticPeerExchangeHandler().getNeighborID());
+            if (hasChanged) {
+                log_message = PeerLog.log_Optimistically_unchoked(myPeer.peerID, Client_Utils.getOptimisticPeerExchangeHandler().getNeighborID());
+            }
         }
 
         if (hasChanged) {
@@ -216,28 +224,30 @@ public class PeerClient {
     }
 
     public static Boolean selectPreferredNeighbors(Boolean rand) {
-        HashSet<Integer> initial = preferredNeighbors;
+        HashSet<Integer> initial = new HashSet<>(preferredNeighbors);
+        preferredNeighbors.clear();
 
         if (rand) {
-            if (interestedNeighbors.size() <= NumberOfPreferredNeighbors) {
+            int numInterested = interestedNeighbors.size();
+            if (numInterested <= NumberOfPreferredNeighbors) {
                 preferredNeighbors.addAll(interestedNeighbors);
             } else {
-                while (preferredNeighbors.size() != NumberOfPreferredNeighbors) {
+                int prefSize = Math.min(NumberOfPreferredNeighbors, numInterested);
+                while (preferredNeighbors.size() != prefSize) {
                     preferredNeighbors.add(Client_Utils.randomSetValue(interestedNeighbors));
                 }
             }
         } else {
-            // TODO: Check If Works
-            DownloadRatesHandler drh = new DownloadRatesHandler();
-
             for (PeerExchangeHandler p : peerConnections) {
                 Float currRate = ((float) downloadAmountInInterval.get(p.getNeighborID())) / UnchokingInterval;
-                drh.add_rate(p.getNeighborID(), currRate);
+                download_handler.add_rate(p.getNeighborID(), currRate);
             }
-            Client_Utils.setAllValues(downloadAmountInInterval, 0);
 
-            preferredNeighbors = drh.getPreferredNeighbors(NumberOfPreferredNeighbors);
-            preferredNeighbors.retainAll(interestedNeighbors);
+            preferredNeighbors = download_handler.getPreferredNeighbors(NumberOfPreferredNeighbors, interestedNeighbors);
+
+            // Clears everything for next interval
+            Client_Utils.setAllValues(downloadAmountInInterval, 0);
+            download_handler.clear();
         }
 
         // Get Neighbors to Choke
@@ -247,14 +257,14 @@ public class PeerClient {
             }
         }
 
+        // Check if Preferred Neighbors Changed
         return !initial.equals(preferredNeighbors);
     }
 
     public static Boolean selectOptimisticNeighbor() {
-        // TODO: Test. Start off as choked? initial Delay?
         Set<Integer> interestedAndChoked = new HashSet<Integer>(interestedNeighbors);
         interestedAndChoked.retainAll(chokedNeighbors);
-        if (!interestedAndChoked.isEmpty()) {          
+        if (!interestedAndChoked.isEmpty()) {
             // Sets Current Optimistically Unchoked Neighbor Off
             if (optimisticNeighbor != null) {
                 if (!preferredNeighbors.contains(optimisticNeighbor.getNeighborID())) {
@@ -266,13 +276,13 @@ public class PeerClient {
             }
             
             // Randomly Selects New Optimistically Unchoked Neighbor
-            Integer pID = Client_Utils.randomSetValue(interestedAndChoked);
-            optimisticNeighbor = Client_Utils.getPeerExchangeHandlerByID(pID);
+            optimisticNeighbor = Client_Utils.getPeerExchangeHandlerByID(Client_Utils.randomSetValue(interestedAndChoked));
             
             // Sends Unchoke Message
             chokedNeighbors.remove(optimisticNeighbor.getNeighborID());
             optimisticNeighbor.setNeighborOptimisticallyChoked(true);
             optimisticNeighbor.unchokeExchange();
+
             return true;
         }
 
@@ -285,40 +295,32 @@ public class PeerClient {
             curr = Client_Utils.getPeerExchangeHandlerByID(pID);
             if (!curr.getIsUnchoked()) {
                 curr.unchokeExchange();
-                String log_message = PeerLog.log_Unchoke(myPeer.peerID, pID);
-                myPeer.writeToLog(log_message);
             }
         }
     }
 
     public static void chokeNeighbors() {
         for (PeerExchangeHandler peh : peerConnections) {
-            Boolean notOptimistic = Integer.compare(peh.getNeighborID(), optimisticNeighbor.getNeighborID()) != 0;
+            Boolean notOptimistic = optimisticNeighbor == null || (Integer.compare(peh.getNeighborID(), optimisticNeighbor.getNeighborID()) != 0);
             if (!preferredNeighbors.contains(peh.getNeighborID()) && notOptimistic) {
                 peh.chokeExchange();
                 chokedNeighbors.add(peh.getNeighborID());
-                String log_message = PeerLog.log_Choke(myPeer.peerID, peh.getNeighborID());
-                myPeer.writeToLog(log_message);
             }
         }
     }
 
-    // Pieces Needed Functions
+    // PeerExchangeHandler Functions
+
+    public static Peer getMyPeer() {
+        return myPeer;
+    }
 
     public static void removePieceFromNeeded(BitField bf) {
         myPeer.bitfield.setArrayPiece(bf);
+        myPeer.bitfield_bits.setArrayPiece(bf.id);
     }
 
     public static HashSet<Integer> getPiecesNeeded() {
         return myPeer.bitfield.piecesNeeded();
-    }
-
-    // TCP Connections Closed
-    public static void close_connections() throws IOException {
-        for (PeerExchangeHandler s : peerConnections) {
-            s.close_connection();
-        }
-
-        taskScheduler.shutdown();
     }
 }

@@ -63,10 +63,7 @@ public class Client_Utils {
     public static void createLogFile() throws IOException {
         String path = "log_peer_" + PeerClient.myPeer.peerID + ".log";
         File log_file = new File(path);
-        // TODO: Check or always create new log?
-        if (!log_file.exists()) {
-            log_file.createNewFile();
-        }
+        log_file.createNewFile();
     }
 
     // Returns the current date and time
@@ -107,7 +104,7 @@ public class Client_Utils {
             }
         }
 
-        return true;
+        return PeerClient.myPeer.peerHasFile;
     }
 
     // Checks if all peers have initiated
@@ -130,6 +127,10 @@ public class Client_Utils {
 
     // Returns a random values from the set
     public static Integer randomSetValue(Set<Integer> set) {
+        if (set.isEmpty()) {
+            return null;
+        }
+
         int randomNeighborNum = randomValue(set.size());
         int i = 0;
         for (Integer num : set) {
@@ -139,7 +140,6 @@ public class Client_Utils {
             i++;
         }
         
-        // TODO: Make sure null can't be returned
         return null;
     }
 

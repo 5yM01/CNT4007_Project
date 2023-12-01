@@ -24,7 +24,6 @@ public class DownloadRatesHandler {
         }
     }
 
-
     public void add_rate(Integer pID, Float rate) {
         pairs.add(get_index(rate), new RatePair(pID, rate));
     }
@@ -42,18 +41,24 @@ public class DownloadRatesHandler {
         return i;
     }
 
-    public HashSet<Integer> getPreferredNeighbors(Integer num) {
+    public HashSet<Integer> getPreferredNeighbors(Integer num, HashSet<Integer> interested) {
         HashSet<Integer> pref = new HashSet<>();
 
-        // TODO: Use min?
-        if (pairs.size() <= num) {
-            num = pairs.size();
-        } 
+        int prefSize = Math.min(pairs.size(), num);
 
-        for (int i = 0; i < num; i++) {
-            pref.add(pairs.get(i).id);
+        int i = 0, j = 0, currID = 0;
+        while (i < prefSize && j < pairs.size()) {
+            currID = pairs.get(j++).id;
+            if (interested.contains(currID)) {
+                pref.add(currID);
+                i++;
+            }
         }
 
         return pref;
+    }
+
+    public void clear() {
+        pairs.clear();
     }
 }
