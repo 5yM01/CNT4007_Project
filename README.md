@@ -70,6 +70,7 @@ Our project is a version of the P2P file-sharing software BitTorrent. It shares 
 
 # Additional Details
 To test (5) peers, configure PeerInfo.cfg to contain only the following data:
+
     1001 lin114-00.cise.ufl.edu 6011 1 
     1002 lin114-01.cise.ufl.edu 6011 0 
     1003 lin114-02.cise.ufl.edu 6011 0 
