@@ -58,7 +58,7 @@ Our project is a version of the P2P file-sharing software BitTorrent. It shares 
 Connect to any of the CISE Linux Machines (eg. storm) using your uf credentials. 
 
 ### Unzipping the Project Folder
-    tar -xzvf (zip file name) 
+    > tar -xzvf (zip file name) 
 
 #### Manual Execution
 - Compile
@@ -70,21 +70,21 @@ Use the Run Command in different Terminal Windows, one time for each Peer that i
 
 #### Automated Execution
 - Compile
-      chmod +x compileJava
-      ./compileJava
+      > chmod +x compileJava
+      > ./compileJava
 - Run
-      java StartRemotePeers
+      > java StartRemotePeers
             - Upon execution the console will confirm that all remote clients have been activated.
 - If the console asks you to confirm 'Yes' to ssh into a lin114 machine then you may need to access each one individually, confirm 'yes' and then run (java StartRemotePeers). eg.
-      ssh lin114-00.cise.ufl.edu
-      yes
-      exit
+      > ssh lin114-00.cise.ufl.edu
+      > yes
+      > exit
   and repeat for each machine listed in PeerInfo.cfg.
 
 # Additional Details
 - To test (5) piers, configure PeerInfo.cfg to contain only this data: 
-    1001 lin114-00.cise.ufl.edu 6011 1 
-    1002 lin114-01.cise.ufl.edu 6011 0 
-    1003 lin114-02.cise.ufl.edu 6011 0 
-    1004 lin114-03.cise.ufl.edu 6011 0 
-    1005 lin114-04.cise.ufl.edu 6011 0 
+    > 1001 lin114-00.cise.ufl.edu 6011 1 
+    > 1002 lin114-01.cise.ufl.edu 6011 0 
+    > 1003 lin114-02.cise.ufl.edu 6011 0 
+    > 1004 lin114-03.cise.ufl.edu 6011 0 
+    > 1005 lin114-04.cise.ufl.edu 6011 0 
