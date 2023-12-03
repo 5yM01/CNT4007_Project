@@ -2,7 +2,7 @@
 
 ## Group 27
 ##### <i>Syed Mahdi (smahdi@ufl.edu)</i> 
-##### <i>Endrick Lafosse (@ufl.edu)</i>
+##### <i>Endrick Lafosse (elafosse@ufl.edu)</i>
 ##### <i>Stella Rojas (s.rojas@ufl.edu)</i>
 
 ## Team Member Contributions
@@ -18,8 +18,9 @@
 2. 
 
 **Endrick Lafosse**
-1. [List Contributions here]
-2. 
+1. Java Classes
+2. Peer Piece Exchange
+3. Testing and Debugging Project
 
 ## Video Link for Demo 
 [Put YouTube or DropBox link here]
@@ -61,4 +62,4 @@ Our project is a version of the P2P file-sharing software BitTorrent. It shares 
     java PeerClient [PeerID]
 
 ### Instructions
-Use the Run Command in different Terminal Windows, one time for each Peer that is listed in [PeerInfo.cfg]. Once all Peers are started, the program will run and they will all connect to each and start the file sharing process. Peer logs for each Peer will be generated after the program has finished running. They will be genereated in the same folder containing all Java files. The file sent to the Peers will be stored in their respective sub-folders, such as folder [peer1002] for Peer 1002, once all pieces have been recieved by all Peers.
+Use the Run Command in different Terminal Windows, one time for each Peer that is listed in [PeerInfo.cfg]. Once all Peers are started, the program will run and they will all connect to each and start the file sharing process. Peer logs for each Peer will be generated after the program has finished running. They will be genereated in the same folder containing all Java files. The file sent to the Peers will be stored in their respective sub-folders, such as folder [peer_1002] for Peer 1002, once all pieces have been recieved by all Peers.
