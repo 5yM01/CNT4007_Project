@@ -16,17 +16,17 @@ public class Client_Utils {
 
     // Returns Piece Size
     public static int getPieceSize() {
-        return PeerClient.PieceSize;
+        return peerProcess.PieceSize;
     }
 
     // Returns File Size
     public static int getFileSize() {
-        return PeerClient.FileSize;
+        return peerProcess.FileSize;
     }
 
     // Returns array of peerconnections
     public static ArrayList<PeerExchangeHandler> getPeerConnections() {
-        return PeerClient.peerConnections;
+        return peerProcess.peerConnections;
     }
 
     // Reads file and returns list of lines
@@ -60,7 +60,7 @@ public class Client_Utils {
 
     // Creates log file for peer
     public static void createLogFile() throws IOException {
-        String path = "log_peer_" + PeerClient.myPeer.peerID + ".log";
+        String path = "log_peer_" + peerProcess.myPeer.peerID + ".log";
         File log_file = new File(path);
         log_file.createNewFile();
     }
@@ -68,7 +68,7 @@ public class Client_Utils {
     // Returns the current date and time
     public static String getDateTime() {
         LocalDateTime curr_time = LocalDateTime.now();
-        DateTimeFormatter format = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
+        DateTimeFormatter format = DateTimeFormatter.ofPattern("MM-dd-yyyy HH:mm:ss");
         return curr_time.format(format);
     }
 
@@ -103,7 +103,7 @@ public class Client_Utils {
             }
         }
 
-        return PeerClient.myPeer.peerHasFile;
+        return peerProcess.myPeer.peerHasFile;
     }
 
     // Checks if all peers have initiated
@@ -190,7 +190,7 @@ public class Client_Utils {
 
     // Increments download amount when piece sent
     public static void pieceSent(Integer pID) {
-        Integer curr = PeerClient.downloadAmountInInterval.get(pID);
-		PeerClient.downloadAmountInInterval.put(pID, curr + 1);
+        Integer curr = peerProcess.downloadAmountInInterval.get(pID);
+		peerProcess.downloadAmountInInterval.put(pID, curr + 1);
     }
 }

@@ -10,7 +10,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class PeerClient {
+public class peerProcess {
     // Class Representing Main Program
 
     // Peer Running Process
