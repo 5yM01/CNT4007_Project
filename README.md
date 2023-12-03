@@ -62,9 +62,9 @@ Connect to any of the CISE Linux Machines (eg. storm) using your uf credentials.
 
 #### Manual Execution
 - Compile
-    javac PeerClient.java
+    > javac PeerClient.java
 - Run
-    java PeerClient [PeerID]
+    > java PeerClient [PeerID]
 - Instructions
 Use the Run Command in different Terminal Windows, one time for each Peer that is listed in [PeerInfo.cfg]. Once all Peers are started, the program will run and they will all connect to each and start the file sharing process. Peer logs for each Peer will be generated after the program has finished running. They will be genereated in the same folder containing all Java files. The file sent to the Peers will be stored in their respective sub-folders, such as folder [peer_1002] for Peer 1002, once all pieces have been recieved by all Peers.
 
