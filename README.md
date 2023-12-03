@@ -58,7 +58,7 @@ Our project is a version of the P2P file-sharing software BitTorrent. It shares 
 - Connect to any of the CISE Linux Machines (eg. storm) using your uf credentials. 
 
 ### Unzipping the Project Folder
-    tar -xzvf (zip file name) 
+    tar -xvf (zip file name) 
 
 #### Manual Execution
 ##### Compile
