@@ -2,6 +2,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashSet;
 
 public class Peer {
     // Class Representing Peer
@@ -12,6 +13,7 @@ public class Peer {
 	public BitFieldArray bitfield;
 	public BitFieldArrayBits bitfield_bits;
 	public String logPath;
+	public HashSet<Integer> piecesRequested = new HashSet<Integer>();
 
 	// Peer Constructor
 	public Peer(String pId, String pAddress, String pPort, String hasFile, int bitFieldLength) {
@@ -37,6 +39,15 @@ public class Peer {
             }
         }
         return false;
+    }
+
+    public void addPiece(BitField bf) {
+        this.bitfield.setArrayPiece(bf);
+        this.bitfield_bits.setArrayPiece(bf.id);
+    }
+
+    public HashSet<Integer> getPiecesNeeded() {
+        return this.bitfield.piecesNeeded();
     }
 
 	// Writes Logging Message To Log File

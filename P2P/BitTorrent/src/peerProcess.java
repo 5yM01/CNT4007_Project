@@ -32,19 +32,22 @@ public class peerProcess {
     static ArrayList<PeerExchangeHandler> peerConnections = new ArrayList<PeerExchangeHandler>();
     
     // P2P Tunnels
-    static HashSet<Integer> piecesRequested = new HashSet<Integer>();
     static HashSet<Integer> preferredNeighbors = new HashSet<Integer>();
     static HashSet<Integer> interestedNeighbors = new HashSet<Integer>();
     static HashSet<Integer> chokedNeighbors = new HashSet<Integer>();
     static HashMap<Integer, Integer> downloadAmountInInterval = new HashMap<>();
+    static DownloadRatesHandler download_handler = new DownloadRatesHandler();
 
     // Peers
     static ArrayList<Peer> peerList = new ArrayList<Peer>();
     static PeerExchangeHandler optimisticNeighbor = null;
-    static DownloadRatesHandler download_handler = new DownloadRatesHandler();
-    
+
     // Schedulers
     static ScheduledExecutorService taskScheduler = Executors.newScheduledThreadPool(2);
+
+    // State
+    static Boolean selectingPref = false;
+    static Boolean selectingOptm = false;
 
     public static void main(String[] args) throws Exception {
         // Read cfg files
@@ -58,6 +61,7 @@ public class peerProcess {
 
         // P2P Piece Exchange
         p2p_exchange();
+        // start_neighbor_selection();
 
         System.out.println("FIN!");
     }
@@ -97,6 +101,11 @@ public class peerProcess {
 
     // Program Parameter Parse
     public static void params(String[] args) throws IOException {
+        if (args.length < 1) {
+            System.out.println("Missing peerID Parameter...");
+            System.exit(-1);
+        }
+
         int myPeerID = Integer.parseInt(args[0]);
         Boolean addToClientNum = true;
 
@@ -115,7 +124,7 @@ public class peerProcess {
                 clientNum++;
             }
         }
-
+        System.out.println("Running Peer " + myPeerID);
         Client_Utils.createLogFile();
     }
 
@@ -154,9 +163,14 @@ public class peerProcess {
         // Continuously Choose Preferred Neighbors
 		Runnable prefNeighborTask = new Runnable() {
             public void run () {
-                neighborSelection(true);
-                unchokeNeighbors();
-                chokeNeighbors();
+                try {
+                    selectingPref = true;
+                    neighborSelection(true);
+                    unchokeNeighbors();
+                    chokeNeighbors();
+                } finally {
+                    selectingPref = false;
+                }
             }
 		};
 		taskScheduler.scheduleAtFixedRate(prefNeighborTask, 0, UnchokingInterval, TimeUnit.SECONDS);
@@ -164,7 +178,12 @@ public class peerProcess {
         // Continuously Choose Optimistically Unchoked Neighbor
         Runnable optimisticNeighborTask = new Runnable() {
             public void run () {
-                neighborSelection(false);
+                try {
+                    selectingOptm = true;
+                    neighborSelection(false);
+                } finally {
+                    selectingOptm = false;
+                }
             }
 		};
 		taskScheduler.scheduleAtFixedRate(optimisticNeighborTask, 0, OptimisticUnchokingInterval, TimeUnit.SECONDS);
@@ -173,7 +192,8 @@ public class peerProcess {
         Client_Utils.waitUntilAllPeersHaveFile();
 
         // Shutdown Scheduler
-        taskScheduler.shutdown();
+        taskScheduler.shutdownNow();
+        // taskScheduler.shutdown();
 
         //download the file to respective peer folders
         downloadCompleteFile(FileName);
@@ -326,7 +346,7 @@ public class peerProcess {
         PeerExchangeHandler curr;
         for (Integer pID : preferredNeighbors) {
             curr = Client_Utils.getPeerExchangeHandlerByID(pID);
-            if (!curr.getIsUnchoked()) {
+            if (!curr.getNeighborUnchoked() && curr.isAlive()) {
                 curr.unchokeExchange();
             }
         }
@@ -335,7 +355,7 @@ public class peerProcess {
     public static void chokeNeighbors() {
         for (PeerExchangeHandler peh : peerConnections) {
             Boolean notOptimistic = optimisticNeighbor == null || (Integer.compare(peh.getNeighborID(), optimisticNeighbor.getNeighborID()) != 0);
-            if (!preferredNeighbors.contains(peh.getNeighborID()) && notOptimistic) {
+            if (peh.getNeighborUnchoked() && !preferredNeighbors.contains(peh.getNeighborID()) && notOptimistic && peh.isAlive()) {
                 peh.chokeExchange();
                 chokedNeighbors.add(peh.getNeighborID());
             }
@@ -346,14 +366,5 @@ public class peerProcess {
 
     public static Peer getMyPeer() {
         return myPeer;
-    }
-
-    public static void removePieceFromNeeded(BitField bf) {
-        myPeer.bitfield.setArrayPiece(bf);
-        myPeer.bitfield_bits.setArrayPiece(bf.id);
-    }
-
-    public static HashSet<Integer> getPiecesNeeded() {
-        return myPeer.bitfield.piecesNeeded();
     }
 }

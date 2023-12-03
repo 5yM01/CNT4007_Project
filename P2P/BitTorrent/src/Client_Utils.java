@@ -75,7 +75,7 @@ public class Client_Utils {
     // Loops until all peers have file
     public static void waitUntilAllPeersHaveFile() {
         while (!allPeersHaveFile()) {
-            waitTime(1000);
+            waitTime(100);
         }
     }
 
@@ -83,6 +83,19 @@ public class Client_Utils {
     public static void waitUntilAllPeersHaveInitiated() {
         while (!allPeersInitiated()) {
             waitTime(1000);
+        }
+    }
+
+    // Loops until all peers have initiated
+    public static void waitUntilNotSelectingNeighbors() {
+        while (peerProcess.selectingOptm || peerProcess.selectingPref) {
+            waitTime(1000);
+        }
+    }
+
+    public static void waitToCloseConnections() {
+        while (peerProcess.selectingOptm || peerProcess.selectingPref || !allPeersHaveFile() || sendingOrReceiving()) {
+            waitTime(50);
         }
     }
 
@@ -95,6 +108,16 @@ public class Client_Utils {
         }
     }
 
+    private static boolean sendingOrReceiving() {
+        for (PeerExchangeHandler p : getPeerConnections()) {
+            if (p.getIsSending() || p.getIsReceiving()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+    
     // Checks if all peers have the file
     public static Boolean allPeersHaveFile() {
         for (PeerExchangeHandler p : getPeerConnections()) {
@@ -106,8 +129,25 @@ public class Client_Utils {
         return peerProcess.myPeer.peerHasFile;
     }
 
+    // Checks if all peers have the file
+    public static Boolean allPeersTryingToClose() {
+        for (PeerExchangeHandler p : getPeerConnections()) {
+            // if (!p.getNeighborHasFile()) {
+            if (!p.trying_to_close) {
+            // if (!p.neighborDone) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     // Checks if all peers have initiated
     public static Boolean allPeersInitiated() {
+        if (getPeerConnections().size() != peerProcess.peerList.size() - 1) {
+            return false;
+        }
+
         for (PeerExchangeHandler p : getPeerConnections()) {
             if (!p.getHasInitiated()) {
                 return false;
@@ -145,6 +185,17 @@ public class Client_Utils {
     // Returns a random value between 0 and max (exclusive)
     public static Integer randomValue(Integer max) {
         return ThreadLocalRandom.current().nextInt(0, max);
+    }
+
+    // Get Peer by ID
+    public static Peer getPeerFromList(Integer pID) {
+        for (Peer p : peerProcess.peerList) {
+            if (Integer.compare(p.peerID, pID) == 0) {
+                return p;
+            }
+        }
+
+        return null;
     }
 
     // Get PEH by ID
@@ -186,11 +237,5 @@ public class Client_Utils {
         for (PeerExchangeHandler peh : getPeerConnections()) {
             peh.sendHaveMessage(pieceID);
         }
-    }
-
-    // Increments download amount when piece sent
-    public static void pieceSent(Integer pID) {
-        Integer curr = peerProcess.downloadAmountInInterval.get(pID);
-		peerProcess.downloadAmountInInterval.put(pID, curr + 1);
     }
 }
