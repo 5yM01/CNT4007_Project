@@ -1,0 +1,6 @@
+# Compiled class file
+*.class
+
+# VSCode files
+P2P/BitTorrent/.vscode/
+P2P/BitTorrent/bin/
