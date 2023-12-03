@@ -55,36 +55,37 @@ Our project is a version of the P2P file-sharing software BitTorrent. It shares 
 
 ## Playbook
 ### Connect to Remote CISE Machines
-Connect to any of the CISE Linux Machines (eg. storm) using your uf credentials. 
+- Connect to any of the CISE Linux Machines (eg. storm) using your uf credentials. 
 
 ### Unzipping the Project Folder
-    > tar -xzvf (zip file name) 
+    tar -xzvf (zip file name) 
 
 #### Manual Execution
-- Compile
-    > javac PeerClient.java
-- Run
-    > java PeerClient [PeerID]
-- Instructions
-Use the Run Command in different Terminal Windows, one time for each Peer that is listed in [PeerInfo.cfg]. Once all Peers are started, the program will run and they will all connect to each and start the file sharing process. Peer logs for each Peer will be generated after the program has finished running. They will be genereated in the same folder containing all Java files. The file sent to the Peers will be stored in their respective sub-folders, such as folder [peer_1002] for Peer 1002, once all pieces have been recieved by all Peers.
+##### Compile
+    javac PeerClient.java
+##### Run
+    java PeerClient [PeerID]
+##### Instructions
+- Use the Run Command in different Terminal Windows, one time for each Peer that is listed in [PeerInfo.cfg]. Once all Peers are started, the program will run and they will all connect to each and start the file sharing process. Peer logs for each Peer will be generated after the program has finished running. They will be genereated in the same folder containing all Java files. The file sent to the Peers will be stored in their respective sub-folders, such as folder [peer_1002] for Peer 1002, once all pieces have been recieved by all Peers.
 
-#### Automated Execution
-- Compile
-      > chmod +x compileJava
-      > ./compileJava
-- Run
-      > java StartRemotePeers
-            - Upon execution the console will confirm that all remote clients have been activated.
-- If the console asks you to confirm 'Yes' to ssh into a lin114 machine then you may need to access each one individually, confirm 'yes' and then run (java StartRemotePeers). eg.
+#### Automated Execution 
+##### Compile
+      chmod +x compileJava
+      ./compileJava
+##### Run
+      java StartRemotePeers
+- Upon execution the console will confirm that all remote clients have been activated.
+- If the console asks you to confirm 'Yes' to ssh into a lin114 machine then you may need to access each one individually, confirm 'yes' and then run (java StartRemotePeers). Run the following code and repeat for each machine listed in PeerInfo.cfg. 
+
       > ssh lin114-00.cise.ufl.edu
       > yes
       > exit
-  and repeat for each machine listed in PeerInfo.cfg.
 
 # Additional Details
-- To test (5) piers, configure PeerInfo.cfg to contain only this data: 
-    > 1001 lin114-00.cise.ufl.edu 6011 1 
-    > 1002 lin114-01.cise.ufl.edu 6011 0 
-    > 1003 lin114-02.cise.ufl.edu 6011 0 
-    > 1004 lin114-03.cise.ufl.edu 6011 0 
-    > 1005 lin114-04.cise.ufl.edu 6011 0 
+    1001 lin114-00.cise.ufl.edu 6011 1 
+    1002 lin114-01.cise.ufl.edu 6011 0 
+    1003 lin114-02.cise.ufl.edu 6011 0 
+    1004 lin114-03.cise.ufl.edu 6011 0 
+    1005 lin114-04.cise.ufl.edu 6011 0 
+- To test (5) piers, configure PeerInfo.cfg to contain only the above data. 
+
