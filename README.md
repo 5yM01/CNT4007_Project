@@ -64,26 +64,12 @@ Our project is a version of the P2P file-sharing software BitTorrent. It shares 
 ##### Compile
     javac PeerProcess.java
 ##### Run
-    java PeerProcess [PeerID]
+    java peerProcess [PeerID]
 ##### Instructions
 - Use the Run Command in different Terminal Windows, one time for each Peer that is listed in [PeerInfo.cfg]. Once all Peers are started, the program will run and they will all connect to each and start the file sharing process. Peer logs for each Peer will be generated after the program has finished running. They will be genereated in the same folder containing all Java files. The file sent to the Peers will be stored in their respective sub-folders, such as folder [peer_1002] for Peer 1002, once all pieces have been recieved by all Peers. These sub-folders for each Peer should be created by the user in the directory that contains the Java files before running the program.
 
-#### Automated Execution 
-##### Compile
-      chmod +x compileJava
-      ./compileJava
-##### Run
-      java StartRemotePeers
-- Upon execution the console will confirm that all remote clients have been activated.
-- If the console asks you to confirm 'Yes' to ssh into a lin114 machine then you may need to access each one individually, confirm 'yes' and then run (java StartRemotePeers). Run the following code and repeat for each machine listed in PeerInfo.cfg. 
-
-      ssh lin114-00.cise.ufl.edu
-      yes
-      exit
-
 # Additional Details
 To test (5) peers, configure PeerInfo.cfg to contain only the following data:
-
     1001 lin114-00.cise.ufl.edu 6011 1 
     1002 lin114-01.cise.ufl.edu 6011 0 
     1003 lin114-02.cise.ufl.edu 6011 0 
