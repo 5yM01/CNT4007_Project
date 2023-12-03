@@ -14,8 +14,12 @@
 5. Documentation
 
 **Stella Rojas**
-1. [List Contributions here]
-2. 
+1. Testing and Debugging Project in CSE Linux Environment
+2. Documentation
+3. Minor Formatting for Start Script for CSE Linux Environment
+4. Console Checkpoint Output
+5. Standardization
+6. File Verification
 
 **Endrick Lafosse**
 1. Java Classes
@@ -29,7 +33,7 @@
 Successfully implemented each of the protocols outlined in the Project Description. [Some errors may exist but they do not affect the correctness of the program or break it in a significant way].
 
 ## Brief Overview
-Our project is a version of the P2P file-sharing software BitTorrent. It shares files between a number of peers using the protocols described below.
+Our project is a version of the P2P file-sharing software BitTorrent. It shares files between a number of peers using the protocols described below, derived from the project documentation. 
 
 - Handshake Message
     - After connecting to each other, the peers will exchange messages that contain the header, zero bits, and peer ID. The stream of messages between the peers will then start after this.
@@ -47,19 +51,41 @@ Our project is a version of the P2P file-sharing software BitTorrent. It shares 
     - Based on the Bitfield, the Peer will send Interested, Not Interested, or Have messages.
       
 - Request and Piece
-    - The Peer will unchoke the Neighbor Peer and randomly pick a piece from the Neighbor which it does not have yet. After sending the Requet message, the Neighbor Peer will send a Message containing the Piece and this exchange will go on until the the Neighbor Peer is choked or it does not have anymore Pieces of Interest.
+    - The Peer will unchoke the Neighbor Peer and randomly pick a piece from the Neighbor which it does not have yet. After sending the Request message, the Neighbor Peer will send a Message containing the Piece and this exchange will go on until the the Neighbor Peer is choked or it does not have anymore Pieces of Interest.
+
 ## Playbook
-
 ### Connect to Remote CISE Machines
-
+- Connect to any of the CISE Linux Machines (eg. storm) using your uf credentials. 
 
 ### Unzipping the Project Folder
-    Put cmd code here for unzipping tar file
+    tar -xzvf (zip file name) 
 
-#### Compile
-    javac PeerClient.java   
-#### Run
-    java PeerClient [PeerID]
+#### Manual Execution
+##### Compile
+    javac PeerProcess.java
+##### Run
+    java PeerProcess [PeerID]
+##### Instructions
+- Use the Run Command in different Terminal Windows, one time for each Peer that is listed in [PeerInfo.cfg]. Once all Peers are started, the program will run and they will all connect to each and start the file sharing process. Peer logs for each Peer will be generated after the program has finished running. They will be genereated in the same folder containing all Java files. The file sent to the Peers will be stored in their respective sub-folders, such as folder [peer_1002] for Peer 1002, once all pieces have been recieved by all Peers. These sub-folders for each Peer should be created by the user in the directory that contains the Java files before running the program.
 
-### Instructions
-Use the Run Command in different Terminal Windows, one time for each Peer that is listed in [PeerInfo.cfg]. Once all Peers are started, the program will run and they will all connect to each and start the file sharing process. Peer logs for each Peer will be generated after the program has finished running. They will be genereated in the same folder containing all Java files. The file sent to the Peers will be stored in their respective sub-folders, such as folder [peer_1002] for Peer 1002, once all pieces have been recieved by all Peers.
+#### Automated Execution 
+##### Compile
+      chmod +x compileJava
+      ./compileJava
+##### Run
+      java StartRemotePeers
+- Upon execution the console will confirm that all remote clients have been activated.
+- If the console asks you to confirm 'Yes' to ssh into a lin114 machine then you may need to access each one individually, confirm 'yes' and then run (java StartRemotePeers). Run the following code and repeat for each machine listed in PeerInfo.cfg. 
+
+      ssh lin114-00.cise.ufl.edu
+      yes
+      exit
+
+# Additional Details
+To test (5) peers, configure PeerInfo.cfg to contain only the following data:
+
+    1001 lin114-00.cise.ufl.edu 6011 1 
+    1002 lin114-01.cise.ufl.edu 6011 0 
+    1003 lin114-02.cise.ufl.edu 6011 0 
+    1004 lin114-03.cise.ufl.edu 6011 0 
+    1005 lin114-04.cise.ufl.edu 6011 0 
