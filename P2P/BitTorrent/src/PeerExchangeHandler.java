@@ -443,7 +443,7 @@ public class PeerExchangeHandler extends Thread {
 			out.writeObject(msg);
 			out.flush();
 		} catch (SocketException e) {
-			e.printStackTrace();
+			;
 		} catch (IOException ioException) {
 			ioException.printStackTrace();
 		} 
@@ -454,10 +454,8 @@ public class PeerExchangeHandler extends Thread {
 
 		try {
 			msg = (Message) in.readObject();
-		} catch (EOFException eof) {
+		} catch (EOFException | SocketException eof) {
 			;
-		} catch (SocketException se) {
-			se.printStackTrace();
 		} catch (ClassNotFoundException | IOException e) {
 			e.printStackTrace();
 		}
