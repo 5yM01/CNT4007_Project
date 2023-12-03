@@ -62,9 +62,9 @@ Our project is a version of the P2P file-sharing software BitTorrent. It shares 
 
 #### Manual Execution
 ##### Compile
-    javac PeerClient.java
+    javac PeerProcess.java
 ##### Run
-    java PeerClient [PeerID]
+    java PeerProcess [PeerID]
 ##### Instructions
 - Use the Run Command in different Terminal Windows, one time for each Peer that is listed in [PeerInfo.cfg]. Once all Peers are started, the program will run and they will all connect to each and start the file sharing process. Peer logs for each Peer will be generated after the program has finished running. They will be genereated in the same folder containing all Java files. The file sent to the Peers will be stored in their respective sub-folders, such as folder [peer_1002] for Peer 1002, once all pieces have been recieved by all Peers. These sub-folders for each Peer should be created by the user in the directory that contains the Java files before running the program.
 
@@ -82,7 +82,7 @@ Our project is a version of the P2P file-sharing software BitTorrent. It shares 
       exit
 
 # Additional Details
-To test (5) piers, configure PeerInfo.cfg to contain only the following data:
+To test (5) peers, configure PeerInfo.cfg to contain only the following data:
 
     1001 lin114-00.cise.ufl.edu 6011 1 
     1002 lin114-01.cise.ufl.edu 6011 0 
