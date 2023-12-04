@@ -27,8 +27,8 @@
 3. Testing and Debugging Project
 
 ## Video Link for Demo 
-[https://youtu.be/viAGFMr6fp4
-](https://youtu.be/QLVzTvUE520)
+https://youtu.be/viAGFMr6fp4
+
 ## Achievements
 Successfully implemented each of the protocols outlined in the Project Description. [Some errors may exist but they do not affect the correctness of the program or break it in a significant way].
 
@@ -66,7 +66,7 @@ Our project is a version of the P2P file-sharing software BitTorrent. It shares 
 ##### Run
     java peerProcess [PeerID]
 ##### Instructions
-- Use the Run Command in different Terminal Windows, one time for each Peer that is listed in [PeerInfo.cfg]. Once all Peers are started, the program will run and they will all connect to each and start the file sharing process. Peer logs for each Peer will be generated after the program has finished running. They will be genereated in the same folder containing all Java files. The file sent to the Peers will be stored in their respective sub-folders, such as folder [peer_1002] for Peer 1002, once all pieces have been recieved by all Peers. These sub-folders for each Peer should be created by the user in the directory that contains the Java files before running the program.
+- Use the Run Command in different Terminal Windows, one time for each Peer that is listed in [PeerInfo.cfg]. Once all Peers are started, the program will run and they will all connect to each and start the file sharing process. Peer logs for each Peer will be generated after the program has finished running. They will be genereated in the same folder containing all Java files. The file sent to the Peers will be stored in their respective sub-folders, such as folder [peer_1002] for Peer 1002, once all pieces have been recieved by all Peers. These sub-folders for each Peer should be created by the user in the directory that contains the Java files before running the program. The file being sent should be stored in the folder of the Peer the [PeerInfo.cfg] file indicates has the file.
 
 # Additional Details
 To test (5) peers, configure PeerInfo.cfg to contain only the following data:
